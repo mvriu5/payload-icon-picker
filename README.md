@@ -24,6 +24,7 @@ import { lexicalEditor } from "@payloadcms/richtext-lexical"
 import * as Icons from "lucide-react"
 import { buildConfig } from "payload"
 import { iconField, payloadIconPlugin } from "@mvriu5/payload-icon-picker"
+import { lucideIconAdapter } from "@mvriu5/payload-icon-picker/adapters/lucide"
 
 export default buildConfig({
     collections: [
@@ -44,8 +45,7 @@ export default buildConfig({
     ],
     plugins: [
         payloadIconPlugin({
-            icons: Icons,
-            resolveIcon: ({ name }) => name,
+            icons: lucideIconAdapter(Icons),
         }),
     ],
     db: postgresAdapter({
@@ -84,33 +84,42 @@ Use `createIconResolver()` to turn a stored string back into the registered icon
 ```tsx
 import * as Icons from "lucide-react"
 import { createIconResolver } from "@mvriu5/payload-icon-picker"
+import { lucideIconAdapter } from "@mvriu5/payload-icon-picker/adapters/lucide"
 
 const resolveStoredIcon = createIconResolver({
-    icons: Icons,
-    resolveIcon: ({ name }) => name,
+    icons: lucideIconAdapter(Icons),
 })
 
 export function PostIcon({ icon }: { icon?: string }) {
     const resolvedIcon = resolveStoredIcon(icon)
-    const Icon = resolvedIcon?.Icon
 
-    if (!Icon) {
+    if (!resolvedIcon?.svg) {
         return null
     }
 
-    return <Icon aria-hidden size={24} />
+    return <span aria-hidden dangerouslySetInnerHTML={{ __html: resolvedIcon.svg }} />
 }
 ```
 
 ## Icon Inputs
 
-You can pass a full icon library namespace:
+Use an adapter for supported icon libraries. Adapters convert React icon exports to serializable SVG metadata for the Payload admin UI.
 
 ```ts
 import * as Icons from "lucide-react"
+import { lucideIconAdapter } from "@mvriu5/payload-icon-picker/adapters/lucide"
 
 payloadIconPlugin({
-    icons: Icons,
+    icons: lucideIconAdapter(Icons),
+})
+```
+
+```ts
+import * as TablerIcons from "@tabler/icons-react"
+import { tablerIconAdapter } from "@mvriu5/payload-icon-picker/adapters/tabler"
+
+payloadIconPlugin({
+    icons: tablerIconAdapter(TablerIcons),
 })
 ```
 
@@ -149,7 +158,7 @@ iconField({
 
 ## Development
 
-The dev Payload config in `dev/payload.config.ts` registers the plugin with a small local icon registry so the picker can be tested without installing another icon package.
+The dev Payload config in `dev/payload.config.ts` registers the plugin with `lucide-react`, which is installed as a development dependency.
 
 ```bash
 pnpm dev

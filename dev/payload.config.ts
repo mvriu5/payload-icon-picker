@@ -5,7 +5,8 @@ import { buildConfig } from "payload"
 import sharp from "sharp"
 import { fileURLToPath } from "url"
 import { iconField, payloadIconPlugin } from "@mvriu5/payload-icon-picker"
-import { icons } from "lucide-react"
+import { tablerIconAdapter } from "../src/adapters/tabler.js"
+import { icons } from "@tabler/icons-react"
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -249,8 +250,7 @@ export default buildConfig({
     editor: lexicalEditor(),
     plugins: [
         payloadIconPlugin({
-            icons: icons,
-            resolveIcon: ({ name }) => name,
+            icons: tablerIconAdapter(icons),
         }),
     ],
     secret: process.env.PAYLOAD_SECRET!,

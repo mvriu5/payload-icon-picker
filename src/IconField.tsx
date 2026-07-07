@@ -1,7 +1,6 @@
 "use client"
 
 import { FieldLabel, useField } from "@payloadcms/ui"
-import { icons as lucideIcons } from "lucide-react"
 import type { TextFieldClientProps, Validate } from "payload"
 import type { ElementType, ReactNode } from "react"
 import React, { useMemo, useState } from "react"
@@ -155,7 +154,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                             whiteSpace: "nowrap",
                         }}
                     >
-                        {selectedIcon ? (selectedIcon.label ?? selectedIcon.name) : placeholder}
+                        {selectedIcon ? (selectedIcon.label ?? selectedIcon.name) : (value || placeholder)}
                     </span>
                     {value ? (
                         <span
@@ -350,14 +349,9 @@ export const IconField: React.FC<IconFieldProps> = ({
 
 const IconPreview = ({ icon }: { icon: IconFieldIcon }) => {
     const PreviewIcon = icon.Icon ?? icon.component
-    const LucideIcon = lucideIcons[icon.name as keyof typeof lucideIcons]
 
     if (PreviewIcon) {
         return <PreviewIcon aria-hidden focusable={false} size={24} />
-    }
-
-    if (LucideIcon) {
-        return <LucideIcon aria-hidden focusable={false} size={24} />
     }
 
     if (icon.svg) {
