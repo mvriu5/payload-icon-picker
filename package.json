@@ -39,9 +39,10 @@
         "generate:importmap": "pnpm dev:generate-importmap",
         "generate:types": "pnpm dev:generate-types",
         "prepublishOnly": "pnpm clean && pnpm build",
-        "test": "pnpm test && pnpm test:e2e",
+        "test": "pnpm test:unit && pnpm test:components",
         "test:e2e": "playwright test",
         "test:e2e:headed": "playwright test --headed",
+        "test:components": "vitest run tests/components",
         "test:unit": "vitest run tests/unit",
         "knip": "knip"
     },

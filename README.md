@@ -19,42 +19,42 @@ pnpm add lucide-react
 Register all icons once in your Payload config, then use `iconField()` wherever a Payload text field should become an icon picker.
 
 ```ts
-import { postgresAdapter } from '@payloadcms/db-postgres'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import * as Icons from 'lucide-react'
-import { buildConfig } from 'payload'
-import { iconField, payloadIconPlugin } from '@mvriu5/payload-icon-picker'
+import { postgresAdapter } from "@payloadcms/db-postgres"
+import { lexicalEditor } from "@payloadcms/richtext-lexical"
+import * as Icons from "lucide-react"
+import { buildConfig } from "payload"
+import { iconField, payloadIconPlugin } from "@mvriu5/payload-icon-picker"
 
 export default buildConfig({
-  collections: [
-    {
-      slug: 'posts',
-      fields: [
+    collections: [
         {
-          name: 'title',
-          type: 'text',
-          required: true,
+            slug: "posts",
+            fields: [
+                {
+                    name: "title",
+                    type: "text",
+                    required: true,
+                },
+                iconField({
+                    name: "icon",
+                    label: "Icon",
+                }),
+            ],
         },
-        iconField({
-          name: 'icon',
-          label: 'Icon',
+    ],
+    plugins: [
+        payloadIconPlugin({
+            icons: Icons,
+            resolveIcon: ({ name }) => name,
         }),
-      ],
-    },
-  ],
-  plugins: [
-    payloadIconPlugin({
-      icons: Icons,
-      resolveIcon: ({ name }) => name,
+    ],
+    db: postgresAdapter({
+        pool: {
+            connectionString: process.env.DATABASE_URL,
+        },
     }),
-  ],
-  db: postgresAdapter({
-    pool: {
-      connectionString: process.env.DATABASE_URL,
-    },
-  }),
-  editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET,
+    editor: lexicalEditor(),
+    secret: process.env.PAYLOAD_SECRET,
 })
 ```
 
@@ -66,8 +66,8 @@ By default, the stored value is `icon.value ?? icon.name`. Use `resolveIcon` to 
 
 ```ts
 payloadIconPlugin({
-  icons: Icons,
-  resolveIcon: ({ name }) => `lucide:${name}`,
+    icons: Icons,
+    resolveIcon: ({ name }) => `lucide:${name}`,
 })
 ```
 
@@ -77,15 +77,40 @@ Selecting `ArrowRight` would store:
 lucide:ArrowRight
 ```
 
+## Resolving Stored Icons
+
+Use `createIconResolver()` to turn a stored string back into the registered icon.
+
+```tsx
+import * as Icons from "lucide-react"
+import { createIconResolver } from "@mvriu5/payload-icon-picker"
+
+const resolveStoredIcon = createIconResolver({
+    icons: Icons,
+    resolveIcon: ({ name }) => name,
+})
+
+export function PostIcon({ icon }: { icon?: string }) {
+    const resolvedIcon = resolveStoredIcon(icon)
+    const Icon = resolvedIcon?.Icon
+
+    if (!Icon) {
+        return null
+    }
+
+    return <Icon aria-hidden size={24} />
+}
+```
+
 ## Icon Inputs
 
 You can pass a full icon library namespace:
 
 ```ts
-import * as Icons from 'lucide-react'
+import * as Icons from "lucide-react"
 
 payloadIconPlugin({
-  icons: Icons,
+    icons: Icons,
 })
 ```
 
@@ -93,15 +118,15 @@ Or pass explicit icon metadata:
 
 ```ts
 payloadIconPlugin({
-  icons: [
-    {
-      Icon: Icons.Home,
-      keywords: ['house', 'start'],
-      label: 'Home',
-      name: 'Home',
-      value: 'home',
-    },
-  ],
+    icons: [
+        {
+            Icon: Icons.Home,
+            keywords: ["house", "start"],
+            label: "Home",
+            name: "Home",
+            value: "home",
+        },
+    ],
 })
 ```
 
@@ -111,14 +136,14 @@ payloadIconPlugin({
 
 ```ts
 iconField({
-  name: 'icon',
-  label: 'Icon',
-  required: true,
-  placeholder: 'Search icons',
-  noResultsLabel: 'No icons found',
-  admin: {
-    position: 'sidebar',
-  },
+    name: "icon",
+    label: "Icon",
+    required: true,
+    placeholder: "Search icons",
+    noResultsLabel: "No icons found",
+    admin: {
+        position: "sidebar",
+    },
 })
 ```
 

@@ -25,6 +25,15 @@ export type IconFieldConfig = Omit<TextField, "admin" | "hasMany" | "maxRows" | 
     placeholder?: string
 }
 
+export type ResolveIconFromStringConfig = {
+    icons: IconFieldIcon[] | IconFieldIconRecord
+    resolveIcon?: (icon: IconFieldIcon) => string
+}
+
+export type ResolvedIcon = IconFieldIcon & {
+    resolvedValue: string
+}
+
 type SerializableIcon = Omit<IconFieldIcon, "Icon" | "component"> & {
     svg?: string
 }
@@ -70,6 +79,27 @@ export const payloadIconPlugin =
 
         return config
     }
+
+export const createIconResolver = ({ icons, resolveIcon }: ResolveIconFromStringConfig) => {
+    const iconMap = new Map<string, ResolvedIcon>()
+
+    normalizeIcons(icons).forEach((icon) => {
+        const resolvedValue = resolveIcon ? resolveIcon(icon) : (icon.value ?? icon.name)
+
+        iconMap.set(resolvedValue, {
+            ...icon,
+            resolvedValue,
+        })
+    })
+
+    return (value: null | string | undefined): ResolvedIcon | undefined => {
+        if (!value) {
+            return undefined
+        }
+
+        return iconMap.get(value)
+    }
+}
 
 const withIconFields = (fields: Field[] | undefined, icons: SerializableIcon[]): Field[] =>
     (fields ?? []).map((field) => {
@@ -139,26 +169,30 @@ const withIconFields = (fields: Field[] | undefined, icons: SerializableIcon[]):
     })
 
 const normalizeIconsForClient = (icons: IconFieldIcon[] | IconFieldIconRecord, resolveIcon?: (icon: IconFieldIcon) => string): SerializableIcon[] => {
-    const normalizedIcons = Array.isArray(icons)
-        ? icons
-        : Object.entries(icons).map(([name, icon]) => {
-              if (isIconComponent(icon)) {
-                  return {
-                      Icon: icon,
-                      name,
-                  }
-              }
-
-              return {
-                  name,
-                  ...icon,
-              }
-          })
-
-    return normalizedIcons.map(({ Icon, component, ...icon }) => ({
+    return normalizeIcons(icons).map(({ Icon, component, ...icon }) => ({
         ...icon,
         value: resolveIcon ? resolveIcon({ Icon, component, ...icon }) : (icon.value ?? icon.name),
     }))
+}
+
+const normalizeIcons = (icons: IconFieldIcon[] | IconFieldIconRecord): IconFieldIcon[] => {
+    if (Array.isArray(icons)) {
+        return icons
+    }
+
+    return Object.entries(icons).map(([name, icon]) => {
+        if (isIconComponent(icon)) {
+            return {
+                Icon: icon,
+                name,
+            }
+        }
+
+        return {
+            name,
+            ...icon,
+        }
+    })
 }
 
 const isIconComponent = (icon: IconFieldIcon | NonNullable<IconFieldIcon["Icon"]>): icon is NonNullable<IconFieldIcon["Icon"]> => {
