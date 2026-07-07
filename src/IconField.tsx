@@ -33,6 +33,7 @@ export type IconFieldProps = TextFieldClientProps & {
 }
 
 const defaultResolveIcon = (icon: IconFieldIcon): string => icon.value ?? icon.name
+const ICON_BATCH_SIZE = 120
 
 const normalizeIcons = (icons: IconFieldIcon[] | IconFieldIconRecord | undefined): IconFieldIcon[] => {
     if (!icons) {
@@ -88,6 +89,7 @@ export const IconField: React.FC<IconFieldProps> = ({
     })
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [query, setQuery] = useState("")
+    const [visibleCount, setVisibleCount] = useState(ICON_BATCH_SIZE)
 
     const selectedIcon = useMemo(() => resolvedIcons.find((icon) => resolveIcon(icon) === value), [resolvedIcons, resolveIcon, value])
 
@@ -101,6 +103,20 @@ export const IconField: React.FC<IconFieldProps> = ({
         return resolvedIcons.filter((icon) => getIconSearchText(icon).includes(normalizedQuery))
     }, [query, resolvedIcons])
 
+    const visibleIcons = useMemo(() => filteredIcons.slice(0, visibleCount), [filteredIcons, visibleCount])
+    const hasMoreIcons = visibleCount < filteredIcons.length
+
+    const openDialog = () => {
+        setVisibleCount(ICON_BATCH_SIZE)
+        setIsDialogOpen(true)
+    }
+
+    const closeDialog = () => {
+        setIsDialogOpen(false)
+        setQuery("")
+        setVisibleCount(ICON_BATCH_SIZE)
+    }
+
     return (
         <div className="field-type text payload-icon-picker">
             <FieldLabel label={label} path={path} required={required} />
@@ -111,7 +127,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                 <button
                     aria-haspopup="dialog"
                     aria-expanded={isDialogOpen}
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={openDialog}
                     style={{
                         alignItems: "center",
                         background: "var(--theme-input-bg)",
@@ -141,19 +157,37 @@ export const IconField: React.FC<IconFieldProps> = ({
                     >
                         {selectedIcon ? (selectedIcon.label ?? selectedIcon.name) : placeholder}
                     </span>
-                    {value ? <code>{value}</code> : null}
+                    {value ? (
+                        <span
+                            onClick={(event) => {
+                                event.stopPropagation()
+                                setValue("")
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault()
+                                    event.stopPropagation()
+                                    setValue("")
+                                }
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            style={{
+                                borderLeft: "1px solid var(--theme-elevation-150)",
+                                color: "var(--theme-elevation-600)",
+                                cursor: "pointer",
+                                paddingLeft: 10,
+                            }}
+                        >
+                            Clear
+                        </span>
+                    ) : null}
                 </button>
-
-                {value ? (
-                    <button onClick={() => setValue("")} style={{ justifySelf: "start" }} type="button">
-                        Clear
-                    </button>
-                ) : null}
 
                 {isDialogOpen ? (
                     <div
                         aria-modal="true"
-                        onClick={() => setIsDialogOpen(false)}
+                        onClick={closeDialog}
                         role="dialog"
                         style={{
                             alignItems: "center",
@@ -184,7 +218,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                         >
                             <div style={{ alignItems: "center", display: "flex", gap: 12 }}>
                                 <h3 style={{ flex: 1, fontSize: 18, margin: 0 }}>Select icon</h3>
-                                <button onClick={() => setIsDialogOpen(false)} type="button">
+                                <button onClick={closeDialog} type="button">
                                     Close
                                 </button>
                             </div>
@@ -192,7 +226,10 @@ export const IconField: React.FC<IconFieldProps> = ({
                             <input
                                 autoFocus
                                 aria-label="Search icons"
-                                onChange={(event) => setQuery(event.target.value)}
+                                onChange={(event) => {
+                                    setQuery(event.target.value)
+                                    setVisibleCount(ICON_BATCH_SIZE)
+                                }}
                                 placeholder={placeholder}
                                 style={{
                                     border: "1px solid var(--theme-elevation-150)",
@@ -208,17 +245,26 @@ export const IconField: React.FC<IconFieldProps> = ({
                             <div
                                 aria-label="Icon options"
                                 role="listbox"
+                                onScroll={(event) => {
+                                    const element = event.currentTarget
+                                    const distanceToBottom = element.scrollHeight - element.scrollTop - element.clientHeight
+
+                                    if (distanceToBottom < 240 && hasMoreIcons) {
+                                        setVisibleCount((count) => Math.min(count + ICON_BATCH_SIZE, filteredIcons.length))
+                                    }
+                                }}
                                 style={{
                                     display: "grid",
                                     gap: 8,
                                     gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))",
-                                    minHeight: 160,
-                                    overflow: "auto",
+                                    maxHeight: "min(440px, calc(100vh - 260px))",
+                                    minHeight: 220,
+                                    overflowY: "auto",
                                     paddingRight: 2,
                                 }}
                             >
                                 {filteredIcons.length > 0 ? (
-                                    filteredIcons.map((icon) => {
+                                    visibleIcons.map((icon) => {
                                         const iconValue = resolveIcon(icon)
                                         const isSelected = iconValue === value
 
@@ -228,7 +274,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                                                 key={iconValue}
                                                 onClick={() => {
                                                     setValue(iconValue)
-                                                    setIsDialogOpen(false)
+                                                    closeDialog()
                                                 }}
                                                 role="option"
                                                 style={{
@@ -264,13 +310,25 @@ export const IconField: React.FC<IconFieldProps> = ({
                                 ) : (
                                     <div>{noResultsLabel}</div>
                                 )}
+                                {hasMoreIcons ? (
+                                    <button
+                                        onClick={() => setVisibleCount((count) => Math.min(count + ICON_BATCH_SIZE, filteredIcons.length))}
+                                        style={{
+                                            gridColumn: "1 / -1",
+                                            minHeight: 40,
+                                        }}
+                                        type="button"
+                                    >
+                                        Load more
+                                    </button>
+                                ) : null}
                             </div>
 
                             {value ? (
                                 <button
                                     onClick={() => {
                                         setValue("")
-                                        setIsDialogOpen(false)
+                                        closeDialog()
                                     }}
                                     style={{
                                         justifySelf: "start",
