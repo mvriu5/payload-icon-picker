@@ -68,7 +68,7 @@
         "graphql": "^17.0.2",
         "lucide-react": "^1.23.0",
         "mongodb-memory-server": "10.1.4",
-        "next": "16.2.6",
+        "next": "16.2.10",
         "payload": "3.84.1",
         "prettier": "^3.4.2",
         "react": "19.2.6",
