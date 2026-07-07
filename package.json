@@ -52,7 +52,7 @@
         "knip": "knip"
     },
     "devDependencies": {
-        "@payloadcms/db-postgres": "3.84.1",
+        "@payloadcms/db-postgres": "3.85.2",
         "@payloadcms/next": "3.84.1",
         "@payloadcms/richtext-lexical": "3.84.1",
         "@payloadcms/ui": "3.84.1",
