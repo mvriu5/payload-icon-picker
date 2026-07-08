@@ -87,6 +87,27 @@ describe("IconField", () => {
         expect(html).not.toContain("<code>home</code>")
     })
 
+    it("renders prefixed selected icon labels with a separated prefix", () => {
+        fieldState.value = "tabler:IconHome"
+
+        const html = renderToStaticMarkup(
+            <IconField
+                field={baseField}
+                icons={[
+                    {
+                        label: "Home",
+                        name: "IconHome",
+                        value: "tabler:IconHome",
+                    },
+                ]}
+                path="icon"
+            />,
+        )
+
+        expect(html).toContain("tabler:")
+        expect(html).toContain("Home")
+    })
+
     it("shows the stored string when it does not match a registered icon", () => {
         fieldState.value = "legacy-icon"
 

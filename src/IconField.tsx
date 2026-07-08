@@ -34,6 +34,7 @@ export type IconFieldProps = TextFieldClientProps & {
 
 const defaultResolveIcon = (icon: IconFieldIcon): string => icon.value ?? icon.name
 const SEARCH_DEBOUNCE_MS = 150
+const ALL_LIBRARY_FILTER = "__all"
 
 const normalizeIcons = (icons: IconFieldIcon[] | IconFieldIconRecord | undefined): IconFieldIcon[] => {
     if (!icons) {
@@ -89,19 +90,36 @@ export const IconField: React.FC<IconFieldProps> = ({
     })
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [query, setQuery] = useState("")
+    const [activeLibrary, setActiveLibrary] = useState(ALL_LIBRARY_FILTER)
     const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS)
 
     const selectedIcon = useMemo(() => resolvedIcons.find((icon) => resolveIcon(icon) === value), [resolvedIcons, resolveIcon, value])
 
+    const iconLibraries = useMemo(() => {
+        const libraries = new Set<string>()
+
+        resolvedIcons.forEach((icon) => {
+            const library = getIconLibrary(icon, resolveIcon)
+
+            if (library) {
+                libraries.add(library)
+            }
+        })
+
+        return Array.from(libraries)
+    }, [resolvedIcons, resolveIcon])
+
     const filteredIcons = useMemo(() => {
         const normalizedQuery = debouncedQuery.trim().toLowerCase()
+        const libraryFilteredIcons =
+            activeLibrary === ALL_LIBRARY_FILTER ? resolvedIcons : resolvedIcons.filter((icon) => getIconLibrary(icon, resolveIcon) === activeLibrary)
 
         if (!normalizedQuery) {
-            return resolvedIcons
+            return libraryFilteredIcons
         }
 
-        return resolvedIcons.filter((icon) => getIconSearchText(icon).includes(normalizedQuery))
-    }, [debouncedQuery, resolvedIcons])
+        return libraryFilteredIcons.filter((icon) => getIconSearchText(icon).includes(normalizedQuery))
+    }, [activeLibrary, debouncedQuery, resolvedIcons, resolveIcon])
 
     const openDialog = () => {
         setIsDialogOpen(true)
@@ -110,6 +128,7 @@ export const IconField: React.FC<IconFieldProps> = ({
     const closeDialog = () => {
         setIsDialogOpen(false)
         setQuery("")
+        setActiveLibrary(ALL_LIBRARY_FILTER)
     }
 
     return (
@@ -150,7 +169,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                             whiteSpace: "nowrap",
                         }}
                     >
-                        {selectedIcon ? (selectedIcon.label ?? selectedIcon.name) : (value || placeholder)}
+                        {selectedIcon ? <IconLabel icon={selectedIcon} resolveIcon={resolveIcon} /> : value || placeholder}
                     </span>
                     {value ? (
                         <span
@@ -248,6 +267,32 @@ export const IconField: React.FC<IconFieldProps> = ({
                                 value={query}
                             />
 
+                            {iconLibraries.length > 1 ? (
+                                <div
+                                    aria-label="Filter icons by library"
+                                    role="group"
+                                    style={{
+                                        display: "flex",
+                                        flexWrap: "wrap",
+                                        gap: 6,
+                                    }}
+                                >
+                                    <LibraryFilterButton
+                                        isActive={activeLibrary === ALL_LIBRARY_FILTER}
+                                        label="All"
+                                        onClick={() => setActiveLibrary(ALL_LIBRARY_FILTER)}
+                                    />
+                                    {iconLibraries.map((library) => (
+                                        <LibraryFilterButton
+                                            isActive={activeLibrary === library}
+                                            key={library}
+                                            label={library}
+                                            onClick={() => setActiveLibrary(library)}
+                                        />
+                                    ))}
+                                </div>
+                            ) : null}
+
                             {filteredIcons.length > 0 ? (
                                 <VirtuosoGrid
                                     aria-label="Icon options"
@@ -298,7 +343,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                                                         whiteSpace: "nowrap",
                                                     }}
                                                 >
-                                                    {icon.label ?? icon.name}
+                                                    <IconLabel icon={icon} resolveIcon={resolveIcon} />
                                                 </span>
                                             </button>
                                         )
@@ -340,6 +385,26 @@ export const IconField: React.FC<IconFieldProps> = ({
     )
 }
 
+const LibraryFilterButton = ({ isActive, label, onClick }: { isActive: boolean; label: string; onClick: () => void }) => (
+    <button
+        aria-pressed={isActive}
+        onClick={onClick}
+        style={{
+            background: isActive ? "var(--theme-elevation-100)" : "transparent",
+            border: `1px solid ${isActive ? "var(--theme-elevation-400)" : "var(--theme-elevation-150)"}`,
+            borderRadius: 4,
+            color: "inherit",
+            cursor: "pointer",
+            font: "inherit",
+            minHeight: 30,
+            padding: "4px 10px",
+        }}
+        type="button"
+    >
+        {label}
+    </button>
+)
+
 const useDebouncedValue = <Value,>(value: Value, delay: number): Value => {
     const [debouncedValue, setDebouncedValue] = useState(value)
 
@@ -350,6 +415,64 @@ const useDebouncedValue = <Value,>(value: Value, delay: number): Value => {
     }, [delay, value])
 
     return debouncedValue
+}
+
+const IconLabel = ({ icon, resolveIcon }: { icon: IconFieldIcon; resolveIcon: (icon: IconFieldIcon) => string }) => {
+    const { name, prefix } = getIconLabelParts(icon, resolveIcon)
+
+    if (!prefix) {
+        return <>{name}</>
+    }
+
+    return (
+        <>
+            <span style={{ color: "var(--theme-elevation-600)" }}>{prefix}:</span>
+            {name}
+        </>
+    )
+}
+
+const getIconLabelParts = (
+    icon: IconFieldIcon,
+    resolveIcon: (icon: IconFieldIcon) => string
+): {
+    name: string
+    prefix?: string
+} => {
+    const label = icon.label ?? icon.name
+    const labelParts = splitPrefixedValue(label)
+
+    if (labelParts) {
+        return labelParts
+    }
+
+    const valueParts = splitPrefixedValue(resolveIcon(icon))
+
+    if (valueParts) {
+        return {
+            name: label,
+            prefix: valueParts.prefix,
+        }
+    }
+
+    return {
+        name: label,
+    }
+}
+
+const getIconLibrary = (icon: IconFieldIcon, resolveIcon: (icon: IconFieldIcon) => string): string | undefined => splitPrefixedValue(resolveIcon(icon))?.prefix
+
+const splitPrefixedValue = (value: string): { name: string; prefix: string } | undefined => {
+    const separatorIndex = value.indexOf(":")
+
+    if (separatorIndex <= 0 || separatorIndex === value.length - 1) {
+        return undefined
+    }
+
+    return {
+        name: value.slice(separatorIndex + 1),
+        prefix: value.slice(0, separatorIndex),
+    }
 }
 
 const IconPreview = ({ icon }: { icon: IconFieldIcon }) => {
