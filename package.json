@@ -24,6 +24,26 @@
             "import": "./dist/adapters/tabler.js",
             "types": "./dist/adapters/tabler.d.ts",
             "default": "./dist/adapters/tabler.js"
+        },
+        "./adapters/simple-icons": {
+            "import": "./dist/adapters/simple-icons.js",
+            "types": "./dist/adapters/simple-icons.d.ts",
+            "default": "./dist/adapters/simple-icons.js"
+        },
+        "./adapters/heroicons": {
+            "import": "./dist/adapters/heroicons.js",
+            "types": "./dist/adapters/heroicons.d.ts",
+            "default": "./dist/adapters/heroicons.js"
+        },
+        "./adapters/phosphor": {
+            "import": "./dist/adapters/phosphor.js",
+            "types": "./dist/adapters/phosphor.d.ts",
+            "default": "./dist/adapters/phosphor.js"
+        },
+        "./adapters/hugeicons": {
+            "import": "./dist/adapters/hugeicons.js",
+            "types": "./dist/adapters/hugeicons.d.ts",
+            "default": "./dist/adapters/hugeicons.js"
         }
     },
     "main": "./dist/index.js",
@@ -52,10 +72,14 @@
         "knip": "knip"
     },
     "devDependencies": {
+        "@heroicons/react": "^2.2.0",
+        "@hugeicons/core-free-icons": "^4.2.2",
+        "@icons-pack/react-simple-icons": "^13.13.0",
         "@payloadcms/db-postgres": "3.84.1",
         "@payloadcms/next": "3.84.1",
         "@payloadcms/richtext-lexical": "3.84.1",
         "@payloadcms/ui": "3.84.1",
+        "@phosphor-icons/react": "^2.1.10",
         "@playwright/test": "1.61.1",
         "@swc/cli": "0.6.0",
         "@tabler/icons-react": "^3.44.0",
@@ -108,6 +132,26 @@
                 "import": "./dist/adapters/tabler.js",
                 "types": "./dist/adapters/tabler.d.ts",
                 "default": "./dist/adapters/tabler.js"
+            },
+            "./adapters/simple-icons": {
+                "import": "./dist/adapters/simple-icons.js",
+                "types": "./dist/adapters/simple-icons.d.ts",
+                "default": "./dist/adapters/simple-icons.js"
+            },
+            "./adapters/heroicons": {
+                "import": "./dist/adapters/heroicons.js",
+                "types": "./dist/adapters/heroicons.d.ts",
+                "default": "./dist/adapters/heroicons.js"
+            },
+            "./adapters/phosphor": {
+                "import": "./dist/adapters/phosphor.js",
+                "types": "./dist/adapters/phosphor.d.ts",
+                "default": "./dist/adapters/phosphor.js"
+            },
+            "./adapters/hugeicons": {
+                "import": "./dist/adapters/hugeicons.js",
+                "types": "./dist/adapters/hugeicons.d.ts",
+                "default": "./dist/adapters/hugeicons.js"
             }
         },
         "main": "./dist/index.js",

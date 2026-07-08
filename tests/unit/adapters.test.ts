@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest"
+import { HomeIcon } from "@heroicons/react/24/outline"
+import { House } from "@phosphor-icons/react/dist/csr/House"
+import { SiGithub } from "@icons-pack/react-simple-icons"
+import Home01Icon from "@hugeicons/core-free-icons/Home01Icon"
 
+import { heroiconsAdapter } from "../../src/adapters/heroicons.js"
+import { hugeiconsIconAdapter } from "../../src/adapters/hugeicons.js"
 import { lucideIconAdapter } from "../../src/adapters/lucide.js"
+import { phosphorIconAdapter } from "../../src/adapters/phosphor.js"
+import { simpleIconsAdapter } from "../../src/adapters/simple-icons.js"
 import { tablerIconAdapter } from "../../src/adapters/tabler.js"
 
 const createForwardRefIcon = (displayName: string, iconNode: Array<[string, Record<string, unknown>]>) => ({
@@ -131,5 +139,87 @@ describe("tablerIconAdapter", () => {
             name: "IconHome",
             value: "tabler:IconHome",
         })
+    })
+})
+
+describe("simpleIconsAdapter", () => {
+    it("converts @icons-pack/react-simple-icons components", () => {
+        const icons = simpleIconsAdapter(
+            {
+                SiGithub,
+            },
+            {
+                prefix: "si",
+            }
+        )
+
+        expect(icons[0]).toMatchObject({
+            label: "si:SiGithub",
+            name: "SiGithub",
+            value: "si:SiGithub",
+        })
+        expect(icons[0]?.svg).toContain("<path")
+    })
+})
+
+describe("heroiconsAdapter", () => {
+    it("converts @heroicons/react icon components", () => {
+        const icons = heroiconsAdapter(
+            {
+                HomeIcon,
+            },
+            {
+                prefix: "hero",
+            }
+        )
+
+        expect(icons[0]).toMatchObject({
+            label: "hero:HomeIcon",
+            name: "HomeIcon",
+            value: "hero:HomeIcon",
+        })
+        expect(icons[0]?.svg).toContain("stroke-width")
+        expect(icons[0]?.svg).toContain("<path")
+    })
+})
+
+describe("phosphorIconAdapter", () => {
+    it("converts @phosphor-icons/react icon components with a selected weight", () => {
+        const icons = phosphorIconAdapter(
+            {
+                House,
+            },
+            {
+                prefix: "phosphor",
+                weight: "bold",
+            }
+        )
+
+        expect(icons[0]).toMatchObject({
+            label: "phosphor:House",
+            name: "House",
+            value: "phosphor:House",
+        })
+        expect(icons[0]?.svg).toContain("<path")
+    })
+})
+
+describe("hugeiconsIconAdapter", () => {
+    it("converts @hugeicons/core-free-icons icon node arrays", () => {
+        const icons = hugeiconsIconAdapter(
+            {
+                Home01Icon,
+            },
+            {
+                prefix: "huge",
+            }
+        )
+
+        expect(icons[0]).toMatchObject({
+            label: "huge:Home01Icon",
+            name: "Home01Icon",
+            value: "huge:Home01Icon",
+        })
+        expect(icons[0]?.svg).toContain("<path")
     })
 })

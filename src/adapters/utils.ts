@@ -1,6 +1,6 @@
 import type { IconFieldIcon } from "../IconField.js"
 
-type IconNode = Array<[string, Record<string, unknown>]>
+export type IconNode = Array<[string, Record<string, unknown>]>
 
 type IconComponentWithRender = {
     displayName?: string
@@ -23,7 +23,9 @@ export type IconAdapterOptions = {
     include?: string[]
     label?: (args: IconAdapterLabelArgs) => string
     prefix?: string
+    renderProps?: Record<string, unknown>
     value?: (args: IconAdapterValueArgs) => string
+    weight?: string
 }
 
 export type IconLibrary = Record<string, unknown>
@@ -49,7 +51,7 @@ export const createSvgIconAdapter = (icons: IconLibrary, options: IconAdapterOpt
             return []
         }
 
-        const iconNode = getIconNode(icon)
+        const iconNode = getIconNode(icon, options)
 
         if (!iconNode) {
             return []
@@ -108,13 +110,17 @@ const getAdaptedLabel = ({
     return options.prefix ? `${options.prefix}:${defaultLabel}` : defaultLabel
 }
 
-const getIconNode = (icon: unknown): IconNode | undefined => {
+const getIconNode = (icon: unknown, options: IconAdapterOptions): IconNode | undefined => {
+    if (isIconNode(icon)) {
+        return icon
+    }
+
     if (!icon || typeof icon !== "object") {
         return undefined
     }
 
     const component = icon as IconComponentWithRender
-    const rendered = component.render?.({}, null)
+    const rendered = component.render?.(options.renderProps ?? {}, null)
     const iconNode = rendered?.props?.iconNode
 
     if (isIconNode(iconNode)) {
@@ -129,6 +135,12 @@ const getIconNode = (icon: unknown): IconNode | undefined => {
 
     if (renderedIconNode) {
         return renderedIconNode
+    }
+
+    const weightedIconNode = getWeightedIconNode(rendered, options.weight)
+
+    if (weightedIconNode) {
+        return weightedIconNode
     }
 
     return undefined
@@ -148,23 +160,46 @@ const iconNodeToSvg = (iconNode: IconNode): string => {
     return `<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">${children}</svg>`
 }
 
-const reactElementToIconNode = (element: ReactLikeElement | undefined): IconNode | undefined => {
-    if (!element || element.type !== "svg") {
+const getWeightedIconNode = (element: ReactLikeElement | undefined, weight = "regular"): IconNode | undefined => {
+    const weights = element?.props?.weights
+
+    if (!isIconWeightMap(weights)) {
+        return undefined
+    }
+
+    return reactElementToIconNode(weights.get(weight))
+}
+
+const reactElementToIconNode = (element: ReactLikeElement | undefined): IconNode | undefined => reactChildrenToIconNode(element)
+
+const reactChildrenToIconNode = (element: ReactLikeElement | undefined): IconNode | undefined => {
+    if (!element) {
         return undefined
     }
 
     const children = Array.isArray(element.props?.children) ? element.props.children : [element.props?.children]
-    const iconNode = children
-        .filter(isReactElement)
-        .map((child): [string, Record<string, unknown>] => [String(child.type), child.props ?? {}])
-        .filter(([tag]) => tag !== "undefined")
+    const iconNode = children.flatMap((child): IconNode => {
+        if (!isReactElement(child)) {
+            return []
+        }
+
+        if (typeof child.type === "symbol") {
+            return reactChildrenToIconNode(child) ?? []
+        }
+
+        if (typeof child.type !== "string") {
+            return []
+        }
+
+        return [[child.type, child.props ?? {}]]
+    })
 
     return iconNode.length > 0 ? iconNode : undefined
 }
 
 const attrsToString = (attrs: Record<string, unknown>): string => {
     const attrString = Object.entries(attrs)
-        .filter(([key, value]) => key !== "key" && value !== null && value !== undefined)
+        .filter(([key, value]) => key !== "children" && key !== "key" && key !== "ref" && value !== null && value !== undefined)
         .map(([key, value]) => ` ${toKebabCase(key)}="${escapeHtml(String(value))}"`)
         .join("")
 
@@ -184,6 +219,8 @@ const isIconNode = (value: unknown): value is IconNode =>
     })
 
 const isReactElement = (value: unknown): value is ReactLikeElement => value !== null && typeof value === "object" && "type" in value && "props" in value
+
+const isIconWeightMap = (value: unknown): value is Map<string, ReactLikeElement> => value instanceof Map
 
 const toKebabCase = (value: string): string => value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)
 

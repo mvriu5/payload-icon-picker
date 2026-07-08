@@ -126,11 +126,50 @@ payloadIconPlugin({
 })
 ```
 
+```ts
+import * as SimpleIcons from "@icons-pack/react-simple-icons"
+import { simpleIconsAdapter } from "@mvriu5/payload-icon-picker/adapters/simple-icons"
+
+payloadIconPlugin({
+    icons: simpleIconsAdapter(SimpleIcons),
+})
+```
+
+```ts
+import * as Heroicons from "@heroicons/react/24/outline"
+import { heroiconsAdapter } from "@mvriu5/payload-icon-picker/adapters/heroicons"
+
+payloadIconPlugin({
+    icons: heroiconsAdapter(Heroicons),
+})
+```
+
+```ts
+import * as PhosphorIcons from "@phosphor-icons/react"
+import { phosphorIconAdapter } from "@mvriu5/payload-icon-picker/adapters/phosphor"
+
+payloadIconPlugin({
+    icons: phosphorIconAdapter(PhosphorIcons, {
+        weight: "regular",
+    }),
+})
+```
+
+```ts
+import * as Hugeicons from "@hugeicons/core-free-icons"
+import { hugeiconsIconAdapter } from "@mvriu5/payload-icon-picker/adapters/hugeicons"
+
+payloadIconPlugin({
+    icons: hugeiconsIconAdapter(Hugeicons),
+})
+```
+
 Adapters support `prefix`, `include`, `exclude`, and optional label/value formatters:
 
 ```ts
 import * as SimpleIcons from "@icons-pack/react-simple-icons"
 import * as TablerIcons from "@tabler/icons-react"
+import { simpleIconsAdapter } from "@mvriu5/payload-icon-picker/adapters/simple-icons"
 import { tablerIconAdapter } from "@mvriu5/payload-icon-picker/adapters/tabler"
 
 payloadIconPlugin({
@@ -139,7 +178,7 @@ payloadIconPlugin({
             label: ({ defaultLabel, prefix }) => `${prefix}:${defaultLabel.replace(/^Icon/, "")}`,
             prefix: "tabler",
         }),
-        ...tablerIconAdapter(SimpleIcons, {
+        ...simpleIconsAdapter(SimpleIcons, {
             prefix: "si",
         }),
     ],
