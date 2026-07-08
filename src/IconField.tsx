@@ -3,7 +3,8 @@
 import { FieldLabel, useField } from "@payloadcms/ui"
 import type { TextFieldClientProps, Validate } from "payload"
 import type { ElementType, ReactNode } from "react"
-import React, { useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
+import { VirtuosoGrid } from "react-virtuoso"
 
 type IconComponent = ElementType<{
     "aria-hidden"?: boolean
@@ -32,7 +33,7 @@ export type IconFieldProps = TextFieldClientProps & {
 }
 
 const defaultResolveIcon = (icon: IconFieldIcon): string => icon.value ?? icon.name
-const ICON_BATCH_SIZE = 120
+const SEARCH_DEBOUNCE_MS = 150
 
 const normalizeIcons = (icons: IconFieldIcon[] | IconFieldIconRecord | undefined): IconFieldIcon[] => {
     if (!icons) {
@@ -83,37 +84,32 @@ export const IconField: React.FC<IconFieldProps> = ({
     const resolvedIcons = useMemo(() => normalizeIcons(iconsFromProps ?? iconsFromField), [iconsFromField, iconsFromProps])
 
     const { errorMessage, setValue, showError, value } = useField<string>({
-        path,
+        potentiallyStalePath: path,
         validate: validate as Validate | undefined,
     })
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [query, setQuery] = useState("")
-    const [visibleCount, setVisibleCount] = useState(ICON_BATCH_SIZE)
+    const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS)
 
     const selectedIcon = useMemo(() => resolvedIcons.find((icon) => resolveIcon(icon) === value), [resolvedIcons, resolveIcon, value])
 
     const filteredIcons = useMemo(() => {
-        const normalizedQuery = query.trim().toLowerCase()
+        const normalizedQuery = debouncedQuery.trim().toLowerCase()
 
         if (!normalizedQuery) {
             return resolvedIcons
         }
 
         return resolvedIcons.filter((icon) => getIconSearchText(icon).includes(normalizedQuery))
-    }, [query, resolvedIcons])
-
-    const visibleIcons = useMemo(() => filteredIcons.slice(0, visibleCount), [filteredIcons, visibleCount])
-    const hasMoreIcons = visibleCount < filteredIcons.length
+    }, [debouncedQuery, resolvedIcons])
 
     const openDialog = () => {
-        setVisibleCount(ICON_BATCH_SIZE)
         setIsDialogOpen(true)
     }
 
     const closeDialog = () => {
         setIsDialogOpen(false)
         setQuery("")
-        setVisibleCount(ICON_BATCH_SIZE)
     }
 
     return (
@@ -199,6 +195,20 @@ export const IconField: React.FC<IconFieldProps> = ({
                             zIndex: 1000,
                         }}
                     >
+                        <style>
+                            {`
+                                .payload-icon-picker__virtual-grid {
+                                    display: grid;
+                                    gap: 8px;
+                                    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+                                    padding-right: 2px;
+                                }
+
+                                .payload-icon-picker__virtual-grid-item {
+                                    min-width: 0;
+                                }
+                            `}
+                        </style>
                         <div
                             onClick={(event) => event.stopPropagation()}
                             style={{
@@ -225,10 +235,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                             <input
                                 autoFocus
                                 aria-label="Search icons"
-                                onChange={(event) => {
-                                    setQuery(event.target.value)
-                                    setVisibleCount(ICON_BATCH_SIZE)
-                                }}
+                                onChange={(event) => setQuery(event.target.value)}
                                 placeholder={placeholder}
                                 style={{
                                     border: "1px solid var(--theme-elevation-150)",
@@ -241,29 +248,18 @@ export const IconField: React.FC<IconFieldProps> = ({
                                 value={query}
                             />
 
-                            <div
-                                aria-label="Icon options"
-                                role="listbox"
-                                onScroll={(event) => {
-                                    const element = event.currentTarget
-                                    const distanceToBottom = element.scrollHeight - element.scrollTop - element.clientHeight
+                            {filteredIcons.length > 0 ? (
+                                <VirtuosoGrid
+                                    aria-label="Icon options"
+                                    className="payload-icon-picker__virtual-scroller"
+                                    itemClassName="payload-icon-picker__virtual-grid-item"
+                                    itemContent={(index) => {
+                                        const icon = filteredIcons[index]
 
-                                    if (distanceToBottom < 240 && hasMoreIcons) {
-                                        setVisibleCount((count) => Math.min(count + ICON_BATCH_SIZE, filteredIcons.length))
-                                    }
-                                }}
-                                style={{
-                                    display: "grid",
-                                    gap: 8,
-                                    gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))",
-                                    maxHeight: "min(440px, calc(100vh - 260px))",
-                                    minHeight: 220,
-                                    overflowY: "auto",
-                                    paddingRight: 2,
-                                }}
-                            >
-                                {filteredIcons.length > 0 ? (
-                                    visibleIcons.map((icon) => {
+                                        if (!icon) {
+                                            return null
+                                        }
+
                                         const iconValue = resolveIcon(icon)
                                         const isSelected = iconValue === value
 
@@ -287,6 +283,7 @@ export const IconField: React.FC<IconFieldProps> = ({
                                                     justifyItems: "center",
                                                     minHeight: 82,
                                                     padding: 8,
+                                                    width: "100%",
                                                 }}
                                                 title={icon.label ?? icon.name}
                                                 type="button"
@@ -305,23 +302,19 @@ export const IconField: React.FC<IconFieldProps> = ({
                                                 </span>
                                             </button>
                                         )
-                                    })
-                                ) : (
-                                    <div>{noResultsLabel}</div>
-                                )}
-                                {hasMoreIcons ? (
-                                    <button
-                                        onClick={() => setVisibleCount((count) => Math.min(count + ICON_BATCH_SIZE, filteredIcons.length))}
-                                        style={{
-                                            gridColumn: "1 / -1",
-                                            minHeight: 40,
-                                        }}
-                                        type="button"
-                                    >
-                                        Load more
-                                    </button>
-                                ) : null}
-                            </div>
+                                    }}
+                                    listClassName="payload-icon-picker__virtual-grid"
+                                    role="listbox"
+                                    style={{
+                                        height: "min(440px, calc(100vh - 260px))",
+                                        minHeight: 220,
+                                        overflowY: "auto",
+                                    }}
+                                    totalCount={filteredIcons.length}
+                                />
+                            ) : (
+                                <div>{noResultsLabel}</div>
+                            )}
 
                             {value ? (
                                 <button
@@ -345,6 +338,18 @@ export const IconField: React.FC<IconFieldProps> = ({
             {showError && errorMessage ? <div className="field-error">{errorMessage}</div> : null}
         </div>
     )
+}
+
+const useDebouncedValue = <Value,>(value: Value, delay: number): Value => {
+    const [debouncedValue, setDebouncedValue] = useState(value)
+
+    useEffect(() => {
+        const timeout = window.setTimeout(() => setDebouncedValue(value), delay)
+
+        return () => window.clearTimeout(timeout)
+    }, [delay, value])
+
+    return debouncedValue
 }
 
 const IconPreview = ({ icon }: { icon: IconFieldIcon }) => {

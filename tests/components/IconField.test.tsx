@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const fieldState = vi.hoisted(() => ({
     setValue: vi.fn(),
+    useField: vi.fn(),
     value: "",
 }))
 
@@ -14,17 +15,7 @@ vi.mock("@payloadcms/ui", () => ({
             {required ? " *" : ""}
         </label>
     ),
-    useField: () => ({
-        disabled: false,
-        errorMessage: undefined,
-        formInitializing: false,
-        formProcessing: false,
-        formSubmitted: false,
-        path: "icon",
-        setValue: fieldState.setValue,
-        showError: false,
-        value: fieldState.value,
-    }),
+    useField: fieldState.useField,
 }))
 
 import { IconField } from "../../src/IconField.js"
@@ -39,6 +30,18 @@ const baseField = {
 describe("IconField", () => {
     beforeEach(() => {
         fieldState.setValue.mockClear()
+        fieldState.useField.mockReset()
+        fieldState.useField.mockImplementation(() => ({
+            disabled: false,
+            errorMessage: undefined,
+            formInitializing: false,
+            formProcessing: false,
+            formSubmitted: false,
+            path: "icon",
+            setValue: fieldState.setValue,
+            showError: false,
+            value: fieldState.value,
+        }))
         fieldState.value = ""
     })
 
@@ -56,6 +59,10 @@ describe("IconField", () => {
         expect(html).toContain('aria-haspopup="dialog"')
         expect(html).not.toContain("Clear")
         expect(html).not.toContain('role="dialog"')
+        expect(fieldState.useField).toHaveBeenCalledWith({
+            potentiallyStalePath: "icon",
+            validate: undefined,
+        })
     })
 
     it("shows the selected icon label in the input and clear action on the right", () => {

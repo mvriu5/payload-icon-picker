@@ -52,10 +52,10 @@
         "knip": "knip"
     },
     "devDependencies": {
-        "@payloadcms/db-postgres": "3.85.2",
+        "@payloadcms/db-postgres": "3.84.1",
         "@payloadcms/next": "3.84.1",
         "@payloadcms/richtext-lexical": "3.84.1",
-        "@payloadcms/ui": "3.85.2",
+        "@payloadcms/ui": "3.84.1",
         "@playwright/test": "1.61.1",
         "@swc/cli": "0.6.0",
         "@tabler/icons-react": "^3.44.0",
@@ -67,7 +67,6 @@
         "eslint": "^9.23.0",
         "graphql": "^17.0.2",
         "lucide-react": "^1.23.0",
-        "mongodb-memory-server": "10.1.4",
         "next": "16.2.10",
         "payload": "3.84.1",
         "prettier": "^3.4.2",
@@ -79,6 +78,7 @@
         "vitest": "4.0.18"
     },
     "peerDependencies": {
+        "@payloadcms/ui": "^3.84.1",
         "payload": "^3.84.1",
         "react": "^19.2.6",
         "react-dom": "^19.2.6"
@@ -140,6 +140,7 @@
     },
     "registry": "https://registry.npmjs.org/",
     "dependencies": {
-        "knip": "^6.24.0"
+        "knip": "^6.24.0",
+        "react-virtuoso": "^4.18.10"
     }
 }

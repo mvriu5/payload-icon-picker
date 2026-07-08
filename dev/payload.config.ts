@@ -252,14 +252,7 @@ export default buildConfig({
     editor: lexicalEditor(),
     plugins: [
         payloadIconPlugin({
-            icons: [
-                ...lucideIconAdapter(lucideIcons, {
-                    include: ["Home", "Search", "Star"],
-                }),
-                ...tablerIconAdapter(tablerIcons, {
-                    include: ["IconHome", "IconSearch", "IconStar"],
-                }),
-            ],
+            icons: tablerIconAdapter(tablerIcons),
         }),
     ],
     secret: process.env.PAYLOAD_SECRET!,
