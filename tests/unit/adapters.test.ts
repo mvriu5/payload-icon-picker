@@ -15,9 +15,7 @@ const createForwardRefIcon = (displayName: string, iconNode: Array<[string, Reco
 describe("lucideIconAdapter", () => {
     it("converts forwardRef icon nodes to serializable SVG icons", () => {
         const icons = lucideIconAdapter({
-            Home: createForwardRefIcon("House", [
-                ["path", { d: "M3 10 12 3l9 7", key: "home" }],
-            ]),
+            Home: createForwardRefIcon("House", [["path", { d: "M3 10 12 3l9 7", key: "home" }]]),
             createLucideIcon: () => null,
         })
 
@@ -40,10 +38,27 @@ describe("lucideIconAdapter", () => {
             {
                 exclude: ["Search"],
                 include: ["Home", "Search"],
-            },
+            }
         )
 
         expect(icons.map((icon) => icon.name)).toEqual(["Home"])
+    })
+
+    it("can prefix labels and values while keeping raw icon names", () => {
+        const icons = lucideIconAdapter(
+            {
+                Home: createForwardRefIcon("Home", [["path", { d: "M1 1" }]]),
+            },
+            {
+                prefix: "lucide",
+            }
+        )
+
+        expect(icons[0]).toMatchObject({
+            label: "lucide:Home",
+            name: "Home",
+            value: "lucide:Home",
+        })
     })
 })
 
@@ -80,7 +95,41 @@ describe("tablerIconAdapter", () => {
             name: "IconHome",
             value: "IconHome",
         })
-        expect(icons[0]?.svg).toContain("<path d=\"M5 12l7-7 7 7\" />")
-        expect(icons[0]?.svg).toContain("<path d=\"M5 12v7h14v-7\" />")
+        expect(icons[0]?.svg).toContain('<path d="M5 12l7-7 7 7" />')
+        expect(icons[0]?.svg).toContain('<path d="M5 12v7h14v-7" />')
+    })
+
+    it("supports custom label and value formatters", () => {
+        const icons = tablerIconAdapter(
+            {
+                IconHome: {
+                    displayName: "IconHome",
+                    render: () => ({
+                        props: {
+                            children: [
+                                {
+                                    props: {
+                                        d: "M5 12l7-7 7 7",
+                                    },
+                                    type: "path",
+                                },
+                            ],
+                        },
+                        type: "svg",
+                    }),
+                },
+            },
+            {
+                label: ({ defaultLabel, prefix }) => `${prefix}:${defaultLabel.replace(/^Icon/, "")}`,
+                prefix: "tabler",
+                value: ({ name, prefix }) => `${prefix}:${name}`,
+            }
+        )
+
+        expect(icons[0]).toMatchObject({
+            label: "tabler:Home",
+            name: "IconHome",
+            value: "tabler:IconHome",
+        })
     })
 })

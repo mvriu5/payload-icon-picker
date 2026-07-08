@@ -62,12 +62,13 @@ export default buildConfig({
 
 `iconField()` creates a normal Payload `text` field. The selected icon is resolved to a string and stored in the database.
 
-By default, the stored value is `icon.value ?? icon.name`. Use `resolveIcon` to choose a different format:
+By default, the stored value is `icon.value ?? icon.name`. Adapters can prefix generated values so multiple icon libraries do not collide:
 
 ```ts
 payloadIconPlugin({
-    icons: Icons,
-    resolveIcon: ({ name }) => `lucide:${name}`,
+    icons: lucideIconAdapter(Icons, {
+        prefix: "lucide",
+    }),
 })
 ```
 
@@ -76,6 +77,8 @@ Selecting `ArrowRight` would store:
 ```txt
 lucide:ArrowRight
 ```
+
+You can still use `resolveIcon` if you need a custom final storage format.
 
 ## Resolving Stored Icons
 
@@ -122,6 +125,28 @@ payloadIconPlugin({
     icons: tablerIconAdapter(TablerIcons),
 })
 ```
+
+Adapters support `prefix`, `include`, `exclude`, and optional label/value formatters:
+
+```ts
+import * as SimpleIcons from "@icons-pack/react-simple-icons"
+import * as TablerIcons from "@tabler/icons-react"
+import { tablerIconAdapter } from "@mvriu5/payload-icon-picker/adapters/tabler"
+
+payloadIconPlugin({
+    icons: [
+        ...tablerIconAdapter(TablerIcons, {
+            label: ({ defaultLabel, prefix }) => `${prefix}:${defaultLabel.replace(/^Icon/, "")}`,
+            prefix: "tabler",
+        }),
+        ...tablerIconAdapter(SimpleIcons, {
+            prefix: "si",
+        }),
+    ],
+})
+```
+
+With `prefix`, the adapter keeps `name` as the original library export name and sets `value` to `prefix:name`, for example `tabler:IconHome`.
 
 Or pass explicit icon metadata:
 

@@ -4,7 +4,10 @@ type IconNode = Array<[string, Record<string, unknown>]>
 
 type IconComponentWithRender = {
     displayName?: string
-    render?: (props: Record<string, unknown>, ref: unknown) => {
+    render?: (
+        props: Record<string, unknown>,
+        ref: unknown
+    ) => {
         props?: Record<string, unknown>
         type?: unknown
     }
@@ -18,9 +21,24 @@ type ReactLikeElement = {
 export type IconAdapterOptions = {
     exclude?: string[]
     include?: string[]
+    label?: (args: IconAdapterLabelArgs) => string
+    prefix?: string
+    value?: (args: IconAdapterValueArgs) => string
 }
 
 export type IconLibrary = Record<string, unknown>
+
+export type IconAdapterLabelArgs = {
+    defaultLabel: string
+    name: string
+    prefix?: string
+    value: string
+}
+
+export type IconAdapterValueArgs = {
+    name: string
+    prefix?: string
+}
 
 export const createSvgIconAdapter = (icons: IconLibrary, options: IconAdapterOptions = {}): IconFieldIcon[] => {
     const include = new Set(options.include ?? [])
@@ -37,15 +55,57 @@ export const createSvgIconAdapter = (icons: IconLibrary, options: IconAdapterOpt
             return []
         }
 
+        const value = getValue(name, options)
+        const defaultLabel = getLabel(name, icon)
+
         return [
             {
-                label: getLabel(name, icon),
+                label: getAdaptedLabel({
+                    defaultLabel,
+                    name,
+                    options,
+                    value,
+                }),
                 name,
                 svg: iconNodeToSvg(iconNode),
-                value: name,
+                value,
             },
         ]
     })
+}
+
+const getValue = (name: string, options: IconAdapterOptions): string => {
+    if (options.value) {
+        return options.value({
+            name,
+            prefix: options.prefix,
+        })
+    }
+
+    return options.prefix ? `${options.prefix}:${name}` : name
+}
+
+const getAdaptedLabel = ({
+    defaultLabel,
+    name,
+    options,
+    value,
+}: {
+    defaultLabel: string
+    name: string
+    options: IconAdapterOptions
+    value: string
+}): string => {
+    if (options.label) {
+        return options.label({
+            defaultLabel,
+            name,
+            prefix: options.prefix,
+            value,
+        })
+    }
+
+    return options.prefix ? `${options.prefix}:${defaultLabel}` : defaultLabel
 }
 
 const getIconNode = (icon: unknown): IconNode | undefined => {
@@ -123,14 +183,8 @@ const isIconNode = (value: unknown): value is IconNode =>
         return typeof tag === "string" && Boolean(attrs) && typeof attrs === "object" && !Array.isArray(attrs)
     })
 
-const isReactElement = (value: unknown): value is ReactLikeElement =>
-    value !== null && typeof value === "object" && "type" in value && "props" in value
+const isReactElement = (value: unknown): value is ReactLikeElement => value !== null && typeof value === "object" && "type" in value && "props" in value
 
 const toKebabCase = (value: string): string => value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)
 
-const escapeHtml = (value: string): string =>
-    value
-        .replaceAll("&", "&amp;")
-        .replaceAll("\"", "&quot;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
+const escapeHtml = (value: string): string => value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
