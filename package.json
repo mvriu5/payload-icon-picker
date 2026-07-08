@@ -1,6 +1,6 @@
 {
     "name": "@mvriu5/payload-icon-picker",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Payload plugin introducing an icon picker into the CMS.",
     "license": "MIT",
     "type": "module",
