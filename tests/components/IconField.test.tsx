@@ -20,7 +20,7 @@ vi.mock("@payloadcms/ui", () => ({
     useField: fieldState.useField,
 }))
 
-import { IconField } from "../../src/IconField.js"
+import { IconField } from "../../src/components/IconField.js"
 
 const baseField = {
     admin: {},
@@ -181,7 +181,7 @@ describe("IconField", () => {
 
         expect(html).toContain("disabled")
         expect(html).toContain('aria-disabled="true"')
-        expect(html).toContain("not-allowed")
+        expect(html).toContain("payload-icon-picker__trigger")
     })
 
     it("disables the picker while the field is read-only", () => {

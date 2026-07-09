@@ -1,0 +1,128 @@
+.payload-icon-picker__overlay {
+    align-items: center;
+    background: rgb(0 0 0 / 45%);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 24px;
+    position: fixed;
+    z-index: 1000;
+}
+
+.payload-icon-picker__dialog {
+    background: var(--theme-bg);
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
+    display: grid;
+    gap: 16px;
+    max-height: min(720px, calc(100vh - 48px));
+    max-width: 760px;
+    overflow: hidden;
+    padding: 20px;
+    width: 100%;
+}
+
+.payload-icon-picker__dialog-header {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+}
+
+.payload-icon-picker__dialog-title {
+    flex: 1;
+    font-size: 18px;
+    margin: 0;
+}
+
+.payload-icon-picker__search {
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: 4px;
+    font: inherit;
+    padding: 8px 10px;
+    width: 100%;
+}
+
+.payload-icon-picker__library-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.payload-icon-picker__library-filter-button {
+    background: transparent;
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: 4px;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    min-height: 30px;
+    padding: 4px 10px;
+}
+
+.payload-icon-picker__library-filter-button[aria-pressed="true"] {
+    background: var(--theme-elevation-100);
+    border-color: var(--theme-elevation-400);
+}
+
+.payload-icon-picker__virtual-scroller {
+    height: min(440px, calc(100vh - 260px));
+    min-height: 220px;
+    overflow-y: auto;
+}
+
+.payload-icon-picker__virtual-grid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    padding-right: 2px;
+}
+
+.payload-icon-picker__virtual-grid-item {
+    min-width: 0;
+}
+
+.payload-icon-picker__option {
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: 4px;
+    cursor: pointer;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+    min-height: 82px;
+    padding: 8px;
+    width: 100%;
+}
+
+.payload-icon-picker__option[aria-selected="true"] {
+    background: var(--theme-elevation-100);
+    border-color: var(--theme-success-500);
+}
+
+.payload-icon-picker__option-label {
+    font-size: 12px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.payload-icon-picker__clear-selection {
+    justify-self: start;
+}
+
+.payload-icon-picker__prefix {
+    color: var(--theme-elevation-600);
+}
+
+.payload-icon-picker__preview {
+    display: inline-flex;
+    line-height: 1;
+}
+
+.payload-icon-picker__fallback-preview {
+    font-size: 20px;
+    line-height: 1;
+}

@@ -1,7 +1,8 @@
 import type { Config, Field, TextField } from "payload"
 
-import type { IconFieldIcon, IconFieldIconRecord } from "./IconField.js"
 import { sanitizeSvg } from "./sanitizeSvg.js"
+import type { IconFieldIcon, IconFieldIconRecord } from "./utils.js"
+import { normalizeIcons } from "./utils.js"
 
 export type PayloadIconPluginConfig = {
     /**
@@ -180,32 +181,4 @@ const normalizeIconsForClient = (icons: IconFieldIcon[] | IconFieldIconRecord, r
             value: resolveIcon ? resolveIcon({ Icon, component, ...icon }) : (icon.value ?? icon.name),
         }
     })
-}
-
-const normalizeIcons = (icons: IconFieldIcon[] | IconFieldIconRecord): IconFieldIcon[] => {
-    if (Array.isArray(icons)) {
-        return icons
-    }
-
-    return Object.entries(icons).map(([name, icon]) => {
-        if (isIconComponent(icon)) {
-            return {
-                Icon: icon,
-                name,
-            }
-        }
-
-        return {
-            name,
-            ...icon,
-        }
-    })
-}
-
-const isIconComponent = (icon: IconFieldIcon | NonNullable<IconFieldIcon["Icon"]>): icon is NonNullable<IconFieldIcon["Icon"]> => {
-    if (typeof icon === "function" || typeof icon === "string") {
-        return true
-    }
-
-    return !("Icon" in icon || "component" in icon || "label" in icon || "value" in icon)
 }

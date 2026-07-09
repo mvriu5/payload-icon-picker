@@ -1,4 +1,4 @@
-import type { IconFieldIcon } from "./IconField.js"
+import type { IconFieldIcon } from "./utils.js"
 
 type SearchableField = {
     tokens: string[]
