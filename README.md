@@ -80,9 +80,25 @@ lucide:ArrowRight
 
 You can still use `resolveIcon` if you need a custom final storage format.
 
-## Resolving Stored Icons
+## Rendering Stored Icons
 
-Use `createIconResolver()` to turn a stored string back into the registered icon.
+Use `IconRenderer` from the client export to render a stored icon string in your frontend.
+
+```tsx
+import * as Icons from "lucide-react"
+import { IconRenderer } from "@mvriu5/payload-icon-picker/client"
+import { lucideIconAdapter } from "@mvriu5/payload-icon-picker/adapters/lucide"
+
+const icons = lucideIconAdapter(Icons)
+
+export function PostIcon({ icon }: { icon?: string }) {
+    return <IconRenderer value={icon} icons={icons} className="post-icon" />
+}
+```
+
+The renderer supports React icon components and adapter-generated SVG metadata. SVG output is sanitized before rendering.
+
+If you need full control over rendering, use `createIconResolver()` to turn a stored string back into the registered icon.
 
 ```tsx
 import * as Icons from "lucide-react"
@@ -93,15 +109,7 @@ const resolveStoredIcon = createIconResolver({
     icons: lucideIconAdapter(Icons),
 })
 
-export function PostIcon({ icon }: { icon?: string }) {
-    const resolvedIcon = resolveStoredIcon(icon)
-
-    if (!resolvedIcon?.svg) {
-        return null
-    }
-
-    return <span aria-hidden dangerouslySetInnerHTML={{ __html: resolvedIcon.svg }} />
-}
+const resolvedIcon = resolveStoredIcon("Home")
 ```
 
 ## Icon Inputs
