@@ -1,6 +1,7 @@
 import type { Config, Field, TextField } from "payload"
 
 import type { IconFieldIcon, IconFieldIconRecord } from "./IconField.js"
+import { sanitizeSvg } from "./sanitizeSvg.js"
 
 export type PayloadIconPluginConfig = {
     /**
@@ -89,6 +90,7 @@ export const createIconResolver = ({ icons, resolveIcon }: ResolveIconFromString
         iconMap.set(resolvedValue, {
             ...icon,
             resolvedValue,
+            svg: sanitizeSvg(icon.svg),
         })
     })
 
@@ -169,10 +171,15 @@ const withIconFields = (fields: Field[] | undefined, icons: SerializableIcon[]):
     })
 
 const normalizeIconsForClient = (icons: IconFieldIcon[] | IconFieldIconRecord, resolveIcon?: (icon: IconFieldIcon) => string): SerializableIcon[] => {
-    return normalizeIcons(icons).map(({ Icon, component, ...icon }) => ({
-        ...icon,
-        value: resolveIcon ? resolveIcon({ Icon, component, ...icon }) : (icon.value ?? icon.name),
-    }))
+    return normalizeIcons(icons).map(({ Icon, component, ...icon }) => {
+        const sanitizedSvg = sanitizeSvg(icon.svg)
+
+        return {
+            ...icon,
+            svg: sanitizedSvg,
+            value: resolveIcon ? resolveIcon({ Icon, component, ...icon }) : (icon.value ?? icon.name),
+        }
+    })
 }
 
 const normalizeIcons = (icons: IconFieldIcon[] | IconFieldIconRecord): IconFieldIcon[] => {

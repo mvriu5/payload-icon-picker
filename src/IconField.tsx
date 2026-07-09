@@ -6,6 +6,8 @@ import type { ElementType, ReactNode } from "react"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { VirtuosoGrid } from "react-virtuoso"
 
+import { sanitizeSvg } from "./sanitizeSvg.js"
+
 type IconComponent = ElementType<{
     "aria-hidden"?: boolean
     className?: string
@@ -524,7 +526,11 @@ const IconPreview = ({ icon }: { icon: IconFieldIcon }) => {
     }
 
     if (icon.svg) {
-        return <span aria-hidden dangerouslySetInnerHTML={{ __html: icon.svg }} style={{ display: "inline-flex", lineHeight: 1 }} />
+        const sanitizedSvg = sanitizeSvg(icon.svg)
+
+        if (sanitizedSvg) {
+            return <span aria-hidden dangerouslySetInnerHTML={{ __html: sanitizedSvg }} style={{ display: "inline-flex", lineHeight: 1 }} />
+        }
     }
 
     return (

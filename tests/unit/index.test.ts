@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest"
+import type { Config } from "payload"
 
 import { createIconResolver, iconField, payloadIconPlugin } from "../../src/index.js"
 
 const SearchIcon = () => null
 const HomeIcon = () => null
+
+const createTestConfig = (config: Partial<Config>): Config => config as Config
+const getIconFieldComponent = (field: unknown) =>
+    (field as { admin?: { components?: { Field?: { clientProps?: { icons?: Array<{ name: string; svg?: string; value: string }> }; path?: string } } } }).admin
+        ?.components?.Field
 
 describe("iconField", () => {
     it("creates a single-value text field marked for the icon picker", () => {
@@ -55,48 +61,51 @@ describe("payloadIconPlugin", () => {
                 Search: SearchIcon,
             },
             resolveIcon: ({ name }) => `lucide:${name}`,
-        })({
-            collections: [
-                {
-                    slug: "posts",
-                    fields: [
-                        iconField({
-                            name: "icon",
-                        }),
-                    ],
-                },
-            ],
-            globals: [
-                {
-                    slug: "navigation",
-                    fields: [
-                        {
-                            name: "items",
-                            type: "array",
-                            fields: [
-                                iconField({
-                                    name: "icon",
-                                }),
-                            ],
-                        },
-                    ],
-                },
-            ],
-        })
+        })(
+            createTestConfig({
+                collections: [
+                    {
+                        slug: "posts",
+                        fields: [
+                            iconField({
+                                name: "icon",
+                            }),
+                        ],
+                    },
+                ],
+                globals: [
+                    {
+                        slug: "navigation",
+                        fields: [
+                            {
+                                name: "items",
+                                type: "array",
+                                fields: [
+                                    iconField({
+                                        name: "icon",
+                                    }),
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            })
+        )
 
         const postIconField = config.collections?.[0]?.fields[0]
         const navigationItemsField = config.globals?.[0]?.fields[0] as {
             fields: Array<{ admin?: { components?: { Field?: { clientProps?: { icons?: Array<{ value: string }> }; path?: string } } } }>
         }
         const navigationIconField = navigationItemsField.fields[0]
+        const postIconFieldComponent = getIconFieldComponent(postIconField)
 
-        expect(postIconField?.admin?.components?.Field).toMatchObject({
+        expect(postIconFieldComponent).toMatchObject({
             path: "@mvriu5/payload-icon-picker/client#IconField",
         })
         expect(navigationIconField.admin?.components?.Field).toMatchObject({
             path: "@mvriu5/payload-icon-picker/client#IconField",
         })
-        expect(postIconField?.admin?.components?.Field?.clientProps?.icons).toEqual([
+        expect(postIconFieldComponent?.clientProps?.icons).toEqual([
             {
                 name: "Home",
                 value: "lucide:Home",
@@ -108,24 +117,58 @@ describe("payloadIconPlugin", () => {
         ])
     })
 
+    it("sanitizes SVG metadata before passing icons to the admin client", () => {
+        const config = payloadIconPlugin({
+            icons: [
+                {
+                    name: "Unsafe",
+                    svg: '<svg viewBox="0 0 24 24"><script>alert("xss")</script><path d="M1 1" /></svg>',
+                },
+            ],
+        })(
+            createTestConfig({
+                collections: [
+                    {
+                        slug: "posts",
+                        fields: [
+                            iconField({
+                                name: "icon",
+                            }),
+                        ],
+                    },
+                ],
+            })
+        )
+
+        expect(getIconFieldComponent(config.collections?.[0]?.fields[0])?.clientProps?.icons).toEqual([
+            {
+                name: "Unsafe",
+                svg: undefined,
+                value: "Unsafe",
+            },
+        ])
+    })
+
     it("does not attach admin components when disabled", () => {
         const config = payloadIconPlugin({
             disabled: true,
             icons: {
                 Home: HomeIcon,
             },
-        })({
-            collections: [
-                {
-                    slug: "posts",
-                    fields: [
-                        iconField({
-                            name: "icon",
-                        }),
-                    ],
-                },
-            ],
-        })
+        })(
+            createTestConfig({
+                collections: [
+                    {
+                        slug: "posts",
+                        fields: [
+                            iconField({
+                                name: "icon",
+                            }),
+                        ],
+                    },
+                ],
+            })
+        )
 
         expect(config.collections?.[0]?.fields[0]?.admin?.components).toBeUndefined()
     })
@@ -166,6 +209,25 @@ describe("createIconResolver", () => {
             name: "Home",
             resolvedValue: "home",
             value: "home",
+        })
+    })
+
+    it("returns sanitized SVG metadata from resolved icons", () => {
+        const resolveIcon = createIconResolver({
+            icons: [
+                {
+                    name: "Unsafe",
+                    svg: '<svg viewBox="0 0 24 24"><path d="M1 1" onload="alert(1)" /></svg>',
+                    value: "unsafe",
+                },
+            ],
+        })
+
+        expect(resolveIcon("unsafe")).toMatchObject({
+            name: "Unsafe",
+            resolvedValue: "unsafe",
+            svg: undefined,
+            value: "unsafe",
         })
     })
 })

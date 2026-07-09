@@ -50,13 +50,7 @@ describe("IconField", () => {
     })
 
     it("renders a picker input with placeholder when no icon is selected", () => {
-        const html = renderToStaticMarkup(
-            <IconField
-                field={baseField}
-                path="icon"
-                placeholder="Search icons"
-            />,
-        )
+        const html = renderToStaticMarkup(<IconField field={baseField} path="icon" placeholder="Search icons" />)
 
         expect(html).toContain("Icon")
         expect(html).toContain("Search icons")
@@ -83,7 +77,7 @@ describe("IconField", () => {
                     },
                 ]}
                 path="icon"
-            />,
+            />
         )
 
         expect(html).toContain("Home")
@@ -105,7 +99,7 @@ describe("IconField", () => {
                     },
                 ]}
                 path="icon"
-            />,
+            />
         )
 
         expect(html).toContain("tabler:")
@@ -126,7 +120,7 @@ describe("IconField", () => {
                     },
                 ]}
                 path="icon"
-            />,
+            />
         )
 
         expect(html).toContain("legacy-icon")
@@ -148,7 +142,7 @@ describe("IconField", () => {
                     },
                 ]}
                 path="icon"
-            />,
+            />
         )
 
         expect(html).toContain("Custom")
@@ -156,15 +150,34 @@ describe("IconField", () => {
         expect(html).toContain('d="M4 4h16v16H4z"')
     })
 
-    it("disables the picker while the field is disabled", () => {
-        fieldState.disabled = true
+    it("does not render unsafe SVG metadata for selected custom icons", () => {
+        fieldState.value = "custom"
 
         const html = renderToStaticMarkup(
             <IconField
                 field={baseField}
+                icons={[
+                    {
+                        label: "Custom",
+                        name: "Custom",
+                        svg: '<svg viewBox="0 0 24 24"><script>alert("xss")</script><path d="M4 4h16v16H4z" /></svg>',
+                        value: "custom",
+                    },
+                ]}
                 path="icon"
-            />,
+            />
         )
+
+        expect(html).toContain("Custom")
+        expect(html).not.toContain("<script>")
+        expect(html).not.toContain("alert")
+        expect(html).not.toContain("<svg viewBox")
+    })
+
+    it("disables the picker while the field is disabled", () => {
+        fieldState.disabled = true
+
+        const html = renderToStaticMarkup(<IconField field={baseField} path="icon" />)
 
         expect(html).toContain("disabled")
         expect(html).toContain('aria-disabled="true"')
@@ -181,7 +194,7 @@ describe("IconField", () => {
                     },
                 }}
                 path="icon"
-            />,
+            />
         )
 
         expect(html).toContain("disabled")
@@ -191,12 +204,7 @@ describe("IconField", () => {
     it("disables the picker while the form is processing", () => {
         fieldState.formProcessing = true
 
-        const html = renderToStaticMarkup(
-            <IconField
-                field={baseField}
-                path="icon"
-            />,
-        )
+        const html = renderToStaticMarkup(<IconField field={baseField} path="icon" />)
 
         expect(html).toContain("disabled")
         expect(html).toContain('aria-disabled="true"')
