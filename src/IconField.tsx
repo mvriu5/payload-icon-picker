@@ -3,7 +3,7 @@
 import { FieldLabel, useField } from "@payloadcms/ui"
 import type { TextFieldClientProps, Validate } from "payload"
 import type { ElementType, ReactNode } from "react"
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { VirtuosoGrid } from "react-virtuoso"
 
 type IconComponent = ElementType<{
@@ -79,12 +79,12 @@ export const IconField: React.FC<IconFieldProps> = ({
     resolveIcon = defaultResolveIcon,
     validate,
 }) => {
-    const { custom = {}, description } = field.admin ?? {}
+    const { custom = {}, description, readOnly } = field.admin ?? {}
     const { label, required } = field
     const iconsFromField = custom.icons as IconFieldProps["icons"] | undefined
     const resolvedIcons = useMemo(() => normalizeIcons(iconsFromProps ?? iconsFromField), [iconsFromField, iconsFromProps])
 
-    const { errorMessage, setValue, showError, value } = useField<string>({
+    const { disabled, errorMessage, formProcessing, setValue, showError, value } = useField<string>({
         potentiallyStalePath: path,
         validate: validate as Validate | undefined,
     })
@@ -92,6 +92,7 @@ export const IconField: React.FC<IconFieldProps> = ({
     const [query, setQuery] = useState("")
     const [activeLibrary, setActiveLibrary] = useState(ALL_LIBRARY_FILTER)
     const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS)
+    const isDisabled = Boolean(disabled || readOnly || formProcessing)
 
     const selectedIcon = useMemo(() => resolvedIcons.find((icon) => resolveIcon(icon) === value), [resolvedIcons, resolveIcon, value])
 
@@ -121,15 +122,37 @@ export const IconField: React.FC<IconFieldProps> = ({
         return libraryFilteredIcons.filter((icon) => getIconSearchText(icon).includes(normalizedQuery))
     }, [activeLibrary, debouncedQuery, resolvedIcons, resolveIcon])
 
-    const openDialog = () => {
+    const openDialog = useCallback(() => {
+        if (isDisabled) return
         setIsDialogOpen(true)
-    }
+    }, [isDisabled])
 
-    const closeDialog = () => {
+    const closeDialog = useCallback(() => {
         setIsDialogOpen(false)
         setQuery("")
         setActiveLibrary(ALL_LIBRARY_FILTER)
-    }
+    }, [])
+
+    useEffect(() => {
+        if (!isDialogOpen) return
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.preventDefault()
+                closeDialog()
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [closeDialog, isDialogOpen])
+
+    useEffect(() => {
+        if (isDisabled && isDialogOpen) {
+            closeDialog()
+        }
+    }, [closeDialog, isDisabled, isDialogOpen])
 
     return (
         <div className="field-type text payload-icon-picker">
@@ -141,14 +164,16 @@ export const IconField: React.FC<IconFieldProps> = ({
                 <button
                     aria-haspopup="dialog"
                     aria-expanded={isDialogOpen}
+                    aria-disabled={isDisabled}
+                    disabled={isDisabled}
                     onClick={openDialog}
                     style={{
                         alignItems: "center",
                         background: "var(--theme-input-bg)",
                         border: "1px solid var(--theme-elevation-150)",
                         borderRadius: 4,
-                        color: "inherit",
-                        cursor: "pointer",
+                        color: isDisabled ? "var(--theme-elevation-500)" : "inherit",
+                        cursor: isDisabled ? "not-allowed" : "pointer",
                         display: "flex",
                         font: "inherit",
                         gap: 10,
@@ -175,21 +200,29 @@ export const IconField: React.FC<IconFieldProps> = ({
                         <span
                             onClick={(event) => {
                                 event.stopPropagation()
+                                if (isDisabled) {
+                                    return
+                                }
+
                                 setValue("")
                             }}
                             onKeyDown={(event) => {
                                 if (event.key === "Enter" || event.key === " ") {
                                     event.preventDefault()
                                     event.stopPropagation()
+                                    if (isDisabled) {
+                                        return
+                                    }
+
                                     setValue("")
                                 }
                             }}
                             role="button"
-                            tabIndex={0}
+                            tabIndex={isDisabled ? -1 : 0}
                             style={{
                                 borderLeft: "1px solid var(--theme-elevation-150)",
                                 color: "var(--theme-elevation-600)",
-                                cursor: "pointer",
+                                cursor: isDisabled ? "not-allowed" : "pointer",
                                 paddingLeft: 10,
                             }}
                         >
@@ -313,6 +346,10 @@ export const IconField: React.FC<IconFieldProps> = ({
                                                 aria-selected={isSelected}
                                                 key={iconValue}
                                                 onClick={() => {
+                                                    if (isDisabled) {
+                                                        return
+                                                    }
+
                                                     setValue(iconValue)
                                                     closeDialog()
                                                 }}
@@ -364,6 +401,10 @@ export const IconField: React.FC<IconFieldProps> = ({
                             {value ? (
                                 <button
                                     onClick={() => {
+                                        if (isDisabled) {
+                                            return
+                                        }
+
                                         setValue("")
                                         closeDialog()
                                     }}

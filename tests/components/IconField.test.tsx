@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const fieldState = vi.hoisted(() => ({
+    disabled: false,
+    formProcessing: false,
     setValue: vi.fn(),
     useField: vi.fn(),
     value: "",
@@ -32,16 +34,18 @@ describe("IconField", () => {
         fieldState.setValue.mockClear()
         fieldState.useField.mockReset()
         fieldState.useField.mockImplementation(() => ({
-            disabled: false,
+            disabled: fieldState.disabled,
             errorMessage: undefined,
             formInitializing: false,
-            formProcessing: false,
+            formProcessing: fieldState.formProcessing,
             formSubmitted: false,
             path: "icon",
             setValue: fieldState.setValue,
             showError: false,
             value: fieldState.value,
         }))
+        fieldState.disabled = false
+        fieldState.formProcessing = false
         fieldState.value = ""
     })
 
@@ -150,5 +154,51 @@ describe("IconField", () => {
         expect(html).toContain("Custom")
         expect(html).toContain("<svg viewBox")
         expect(html).toContain('d="M4 4h16v16H4z"')
+    })
+
+    it("disables the picker while the field is disabled", () => {
+        fieldState.disabled = true
+
+        const html = renderToStaticMarkup(
+            <IconField
+                field={baseField}
+                path="icon"
+            />,
+        )
+
+        expect(html).toContain("disabled")
+        expect(html).toContain('aria-disabled="true"')
+        expect(html).toContain("not-allowed")
+    })
+
+    it("disables the picker while the field is read-only", () => {
+        const html = renderToStaticMarkup(
+            <IconField
+                field={{
+                    ...baseField,
+                    admin: {
+                        readOnly: true,
+                    },
+                }}
+                path="icon"
+            />,
+        )
+
+        expect(html).toContain("disabled")
+        expect(html).toContain('aria-disabled="true"')
+    })
+
+    it("disables the picker while the form is processing", () => {
+        fieldState.formProcessing = true
+
+        const html = renderToStaticMarkup(
+            <IconField
+                field={baseField}
+                path="icon"
+            />,
+        )
+
+        expect(html).toContain("disabled")
+        expect(html).toContain('aria-disabled="true"')
     })
 })
