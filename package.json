@@ -90,6 +90,7 @@
         "cross-env": "^7.0.3",
         "eslint": "^9.23.0",
         "graphql": "^17.0.2",
+        "knip": "^6.24.0",
         "lucide-react": "^1.23.0",
         "next": "16.2.10",
         "payload": "3.84.1",
@@ -175,16 +176,8 @@
             "dev/**/*.{ts,tsx,mjs}"
         ]
     },
-    "pnpm": {
-        "onlyBuiltDependencies": [
-            "sharp",
-            "esbuild",
-            "unrs-resolver"
-        ]
-    },
     "registry": "https://registry.npmjs.org/",
     "dependencies": {
-        "knip": "^6.24.0",
         "react-virtuoso": "^4.18.10"
     }
 }
