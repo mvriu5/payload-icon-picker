@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { VirtuosoGrid } from "react-virtuoso"
 
 import { sanitizeSvg } from "./sanitizeSvg.js"
+import { searchIcons } from "./searchIcons.js"
 
 type IconComponent = ElementType<{
     "aria-hidden"?: boolean
@@ -70,8 +71,6 @@ const isIconComponent = (icon: IconComponent | IconFieldIcon): icon is IconCompo
     return !("Icon" in icon || "component" in icon || "label" in icon || "value" in icon)
 }
 
-const getIconSearchText = (icon: IconFieldIcon): string => [icon.name, icon.label, icon.value, ...(icon.keywords ?? [])].filter(Boolean).join(" ").toLowerCase()
-
 export const IconField: React.FC<IconFieldProps> = ({
     field,
     icons: iconsFromProps,
@@ -121,7 +120,7 @@ export const IconField: React.FC<IconFieldProps> = ({
             return libraryFilteredIcons
         }
 
-        return libraryFilteredIcons.filter((icon) => getIconSearchText(icon).includes(normalizedQuery))
+        return searchIcons(libraryFilteredIcons, normalizedQuery)
     }, [activeLibrary, debouncedQuery, resolvedIcons, resolveIcon])
 
     const openDialog = useCallback(() => {
