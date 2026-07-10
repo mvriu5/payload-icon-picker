@@ -24,6 +24,7 @@ export type IconAdapterOptions = {
     label?: (args: IconAdapterLabelArgs) => string
     prefix?: string
     renderProps?: Record<string, unknown>
+    svgMode?: "fill" | "stroke"
     value?: (args: IconAdapterValueArgs) => string
     weight?: string
 }
@@ -69,7 +70,7 @@ export const createSvgIconAdapter = (icons: IconLibrary, options: IconAdapterOpt
                     value,
                 }),
                 name,
-                svg: iconNodeToSvg(iconNode),
+                svg: iconNodeToSvg(iconNode, options.svgMode ?? "stroke"),
                 value,
             },
         ]
@@ -154,8 +155,12 @@ const getLabel = (name: string, icon: unknown): string => {
     return name
 }
 
-const iconNodeToSvg = (iconNode: IconNode): string => {
+const iconNodeToSvg = (iconNode: IconNode, svgMode: NonNullable<IconAdapterOptions["svgMode"]>): string => {
     const children = iconNode.map(([tag, attrs]) => `<${tag}${attrsToString(attrs)} />`).join("")
+
+    if (svgMode === "fill") {
+        return `<svg fill="currentColor" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">${children}</svg>`
+    }
 
     return `<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">${children}</svg>`
 }

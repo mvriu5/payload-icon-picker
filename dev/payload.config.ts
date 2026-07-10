@@ -9,6 +9,8 @@ import { icons as tablerIcons } from "@tabler/icons-react"
 import { icons as lucideIcons } from "lucide-react"
 import { lucideIconAdapter } from "../src/adapters/lucide.js"
 import { tablerIconAdapter } from "../src/adapters/tabler.js"
+import { simpleIconsAdapter } from "../src/adapters/simple-icons.js"
+import * as SimpleIcons from "@icons-pack/react-simple-icons"
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -255,6 +257,9 @@ export default buildConfig({
             icons: [
                 ...lucideIconAdapter(lucideIcons, {
                     prefix: "lucide",
+                }),
+                ...simpleIconsAdapter(SimpleIcons, {
+                    prefix: "si",
                 }),
                 ...tablerIconAdapter(tablerIcons, {
                     label: ({ defaultLabel, prefix }) => `${prefix}:${defaultLabel.replace(/^Icon/, "")}`,

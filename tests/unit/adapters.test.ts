@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { HomeIcon } from "@heroicons/react/24/outline"
 import { House } from "@phosphor-icons/react/dist/csr/House"
-import { SiGithub } from "@icons-pack/react-simple-icons"
+import { SiDiscord, SiGithub } from "@icons-pack/react-simple-icons"
 import Home01Icon from "@hugeicons/core-free-icons/Home01Icon"
 
 import { heroiconsAdapter } from "../../src/adapters/heroicons.js"
@@ -143,9 +143,10 @@ describe("tablerIconAdapter", () => {
 })
 
 describe("simpleIconsAdapter", () => {
-    it("converts @icons-pack/react-simple-icons components", () => {
+    it("converts @icons-pack/react-simple-icons components to filled SVG icons", () => {
         const icons = simpleIconsAdapter(
             {
+                SiDiscord,
                 SiGithub,
             },
             {
@@ -153,12 +154,21 @@ describe("simpleIconsAdapter", () => {
             }
         )
 
-        expect(icons[0]).toMatchObject({
+        expect(icons.map((icon) => icon.name)).toEqual(["SiDiscord", "SiGithub"])
+        expect(icons[1]).toMatchObject({
             label: "si:SiGithub",
             name: "SiGithub",
             value: "si:SiGithub",
         })
-        expect(icons[0]?.svg).toContain("<path")
+
+        for (const icon of icons) {
+            expect(icon.svg).toContain('fill="currentColor"')
+            expect(icon.svg).not.toContain('stroke="currentColor"')
+            expect(icon.svg).not.toContain("stroke-width")
+            expect(icon.svg).not.toContain("stroke-linecap")
+            expect(icon.svg).not.toContain("stroke-linejoin")
+            expect(icon.svg).toContain("<path")
+        }
     })
 })
 

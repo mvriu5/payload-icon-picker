@@ -5,4 +5,8 @@ import type { IconAdapterOptions, IconLibrary } from "./utils.js"
 
 export type SimpleIconsAdapterOptions = IconAdapterOptions
 
-export const simpleIconsAdapter = (icons: IconLibrary, options?: SimpleIconsAdapterOptions): IconFieldIcon[] => createSvgIconAdapter(icons, options)
+export const simpleIconsAdapter = (icons: IconLibrary, options: SimpleIconsAdapterOptions = {}): IconFieldIcon[] =>
+    createSvgIconAdapter(icons, {
+        ...options,
+        svgMode: "fill",
+    })
