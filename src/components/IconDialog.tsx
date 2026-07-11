@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useId, useMemo, useRef, useState } from "react"
 import { VirtuosoGrid } from "react-virtuoso"
 
 import "./IconDialog.css"
@@ -23,6 +23,11 @@ const SEARCH_DEBOUNCE_MS = 150
 const ALL_LIBRARY_FILTER = "__all"
 
 export const IconDialog: React.FC<IconDialogProps> = ({ icons, isDisabled, noResultsLabel, onClear, onClose, onSelect, placeholder, resolveIcon, value }) => {
+    const dialogTitleId = useId()
+    const dialogDescriptionId = useId()
+    const dialogRef = useRef<HTMLDivElement>(null)
+    const searchInputRef = useRef<HTMLInputElement>(null)
+    const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
     const [query, setQuery] = useState("")
     const [activeLibrary, setActiveLibrary] = useState(ALL_LIBRARY_FILTER)
     const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS)
@@ -53,10 +58,50 @@ export const IconDialog: React.FC<IconDialogProps> = ({ icons, isDisabled, noRes
     }, [activeLibrary, debouncedQuery, icons, resolveIcon])
 
     useEffect(() => {
+        previouslyFocusedElementRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+        searchInputRef.current?.focus()
+
+        return () => {
+            previouslyFocusedElementRef.current?.focus()
+        }
+    }, [])
+
+    useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 event.preventDefault()
                 onClose()
+                return
+            }
+
+            if (event.key !== "Tab") {
+                return
+            }
+
+            const dialog = dialogRef.current
+            if (!dialog) return
+
+            const focusableElements = getFocusableElements(dialog)
+            if (focusableElements.length === 0) {
+                event.preventDefault()
+                dialog.focus()
+                return
+            }
+
+            const firstFocusableElement = focusableElements[0]
+            const lastFocusableElement = focusableElements[focusableElements.length - 1]
+
+            if (!firstFocusableElement || !lastFocusableElement) return
+
+            if (event.shiftKey && document.activeElement === firstFocusableElement) {
+                event.preventDefault()
+                lastFocusableElement.focus()
+                return
+            }
+
+            if (!event.shiftKey && document.activeElement === lastFocusableElement) {
+                event.preventDefault()
+                firstFocusableElement.focus()
             }
         }
 
@@ -66,21 +111,36 @@ export const IconDialog: React.FC<IconDialogProps> = ({ icons, isDisabled, noRes
     }, [onClose])
 
     return (
-        <div aria-modal="true" className="payload-icon-picker__overlay" onClick={onClose} role="dialog">
+        <div
+            aria-describedby={dialogDescriptionId}
+            aria-labelledby={dialogTitleId}
+            aria-modal="true"
+            className="payload-icon-picker__overlay"
+            onClick={onClose}
+            ref={dialogRef}
+            role="dialog"
+            tabIndex={-1}
+        >
             <div className="payload-icon-picker__dialog" onClick={(event) => event.stopPropagation()}>
                 <div className="payload-icon-picker__dialog-header">
-                    <h3 className="payload-icon-picker__dialog-title">Select icon</h3>
-                    <button onClick={onClose} type="button">
+                    <h3 className="payload-icon-picker__dialog-title" id={dialogTitleId}>
+                        Select icon
+                    </h3>
+                    <button aria-label="Close icon picker" onClick={onClose} type="button">
                         Close
                     </button>
                 </div>
 
+                <p id={dialogDescriptionId} hidden>
+                    Search, filter, and select an icon. Press Escape to close the dialog.
+                </p>
+
                 <input
-                    autoFocus
                     aria-label="Search icons"
                     className="payload-icon-picker__search"
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder={placeholder}
+                    ref={searchInputRef}
                     type="search"
                     value={query}
                 />
@@ -108,6 +168,7 @@ export const IconDialog: React.FC<IconDialogProps> = ({ icons, isDisabled, noRes
 
                             return (
                                 <button
+                                    aria-label={`Select ${icon.label ?? icon.name}`}
                                     aria-selected={isSelected}
                                     className="payload-icon-picker__option"
                                     key={iconValue}
@@ -164,6 +225,13 @@ const LibraryFilterButton = ({ isActive, label, onClick }: { isActive: boolean; 
         {label}
     </button>
 )
+
+const getFocusableElements = (element: HTMLElement): HTMLElement[] =>
+    Array.from(
+        element.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+    ).filter((focusableElement) => !focusableElement.hasAttribute("hidden") && focusableElement.getAttribute("aria-hidden") !== "true")
 
 const useDebouncedValue = <Value,>(value: Value, delay: number): Value => {
     const [debouncedValue, setDebouncedValue] = useState(value)
