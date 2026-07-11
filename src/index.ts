@@ -28,7 +28,17 @@ export type PayloadIconPluginConfig = {
 
 export type IconFieldConfig = Omit<TextField, "admin" | "hasMany" | "maxRows" | "minRows" | "type"> & {
     admin?: TextField["admin"]
+    /**
+     * Limit this field to icons whose final stored value uses one of these
+     * prefixes. Example: `["lucide"]` matches `lucide:Home`.
+     */
+    libraries?: string[]
     noResultsLabel?: string
+    /**
+     * Limit this field to specific final stored icon values.
+     * Example: `["lucide:Home", "si:SiGithub"]`.
+     */
+    icons?: string[]
     placeholder?: string
 }
 
@@ -46,15 +56,23 @@ export type ResolvedIcon = IconFieldIcon & {
     resolvedValue: string
 }
 
-type SerializableIcon = Omit<IconFieldIcon, "Icon" | "component"> & {
+type SerializableIcon = Omit<IconFieldIcon, "Icon" | "component" | "value"> & {
     svg?: string
+    value: string
+}
+
+type IconFieldMarker = {
+    icons?: string[]
+    libraries?: string[]
+    noResultsLabel?: string
+    placeholder?: string
 }
 
 const ICON_FIELD_MARKER = "payloadIconPicker"
 const ICON_FIELD_COMPONENT = "@mvriu5/payload-icon-picker/client#IconField"
 const PACKAGE_NAME = "@mvriu5/payload-icon-picker"
 
-export const iconField = ({ admin, noResultsLabel, placeholder, ...field }: IconFieldConfig): TextField =>
+export const iconField = ({ admin, icons, libraries, noResultsLabel, placeholder, ...field }: IconFieldConfig): TextField =>
     ({
         ...field,
         hasMany: false,
@@ -64,6 +82,8 @@ export const iconField = ({ admin, noResultsLabel, placeholder, ...field }: Icon
             custom: {
                 ...(admin?.custom ?? {}),
                 [ICON_FIELD_MARKER]: {
+                    icons,
+                    libraries,
                     noResultsLabel,
                     placeholder,
                 },
@@ -127,10 +147,9 @@ const withIconFields = (fields: Field[] | undefined, icons: SerializableIcon[]):
         }
 
         if ("admin" in field && field.admin?.custom?.[ICON_FIELD_MARKER]) {
-            const marker = field.admin.custom[ICON_FIELD_MARKER] as {
-                noResultsLabel?: string
-                placeholder?: string
-            }
+            const marker = field.admin.custom[ICON_FIELD_MARKER] as IconFieldMarker
+            const fieldName = "name" in field && typeof field.name === "string" ? field.name : undefined
+            const filteredIcons = filterIconsForField(icons, marker, fieldName)
 
             const textField = field as TextField
             const admin = textField.admin
@@ -143,7 +162,7 @@ const withIconFields = (fields: Field[] | undefined, icons: SerializableIcon[]):
                         ...(admin?.components ?? {}),
                         Field: {
                             clientProps: {
-                                icons,
+                                icons: filteredIcons,
                                 noResultsLabel: marker.noResultsLabel,
                                 placeholder: marker.placeholder,
                             },
@@ -199,6 +218,81 @@ const normalizeIconsForClient = (icons: IconFieldIcon[] | IconFieldIconRecord, r
             value: resolveIcon ? resolveIcon({ Icon, component, ...icon }) : (icon.value ?? icon.name),
         }
     })
+}
+
+const filterIconsForField = (icons: SerializableIcon[], marker: IconFieldMarker, fieldName: string | undefined): SerializableIcon[] => {
+    const allowedLibraries = new Set(marker.libraries ?? [])
+    const allowedIconValues = new Set(marker.icons ?? [])
+
+    if (allowedLibraries.size === 0 && allowedIconValues.size === 0) {
+        return icons
+    }
+
+    const filteredIcons = icons.filter((icon) => {
+        const library = getIconValueLibrary(icon.value)
+
+        return allowedIconValues.has(icon.value) || (library ? allowedLibraries.has(library) : false)
+    })
+
+    warnAboutUnmatchedIconFieldFilters({
+        allowedIconValues,
+        allowedLibraries,
+        fieldName,
+        filteredIcons,
+        icons,
+    })
+
+    return filteredIcons
+}
+
+const getIconValueLibrary = (value: string): string | undefined => {
+    const separatorIndex = value.indexOf(":")
+
+    if (separatorIndex <= 0) {
+        return undefined
+    }
+
+    return value.slice(0, separatorIndex)
+}
+
+const warnAboutUnmatchedIconFieldFilters = ({
+    allowedIconValues,
+    allowedLibraries,
+    fieldName,
+    filteredIcons,
+    icons,
+}: {
+    allowedIconValues: Set<string>
+    allowedLibraries: Set<string>
+    fieldName: string | undefined
+    filteredIcons: SerializableIcon[]
+    icons: SerializableIcon[]
+}): void => {
+    if (isProduction()) return
+
+    const knownIconValues = new Set(icons.map((icon) => icon.value))
+    const knownLibraries = new Set(icons.map((icon) => getIconValueLibrary(icon.value)).filter((library): library is string => Boolean(library)))
+    const unknownIconValues = Array.from(allowedIconValues).filter((value) => !knownIconValues.has(value))
+    const unknownLibraries = Array.from(allowedLibraries).filter((library) => !knownLibraries.has(library))
+    const fieldLabel = fieldName ? `iconField("${fieldName}")` : "iconField()"
+
+    if (unknownIconValues.length > 0) {
+        console.warn(
+            `[${PACKAGE_NAME}] ${fieldLabel} references unknown icon values: ${unknownIconValues.map((value) => `"${value}"`).join(", ")}. ` +
+                "Make sure the matching icons are registered in payloadIconPlugin()."
+        )
+    }
+
+    if (unknownLibraries.length > 0) {
+        console.warn(
+            `[${PACKAGE_NAME}] ${fieldLabel} references unknown icon libraries: ${unknownLibraries.map((library) => `"${library}"`).join(", ")}. ` +
+                "Make sure the matching adapters use these prefixes in payloadIconPlugin()."
+        )
+    }
+
+    if (filteredIcons.length === 0) {
+        console.warn(`[${PACKAGE_NAME}] ${fieldLabel} filter matched no icons. The picker will render with an empty icon list.`)
+    }
 }
 
 const warnAboutDuplicateIconValues = (icons: IconFieldIcon[], resolveValue: (icon: IconFieldIcon) => string): void => {

@@ -225,7 +225,7 @@ payloadIconPlugin({
 
 ## Field Options
 
-`iconField()` accepts normal single-value Payload text field options, plus picker labels:
+`iconField()` accepts normal single-value Payload text field options, plus picker labels and per-field icon filters:
 
 ```ts
 iconField({
@@ -237,6 +237,36 @@ iconField({
     admin: {
         position: "sidebar",
     },
+})
+```
+
+Use `libraries` to limit a field to icons from selected adapter prefixes:
+
+```ts
+iconField({
+    name: "navigationIcon",
+    label: "Navigation Icon",
+    libraries: ["lucide"],
+})
+```
+
+Use `icons` to allow only specific stored icon values:
+
+```ts
+iconField({
+    name: "socialIcon",
+    label: "Social Icon",
+    icons: ["si:SiGithub", "si:SiDiscord"],
+})
+```
+
+You can combine both options. The filters are additive, so this example allows all Lucide icons plus the explicit GitHub icon:
+
+```ts
+iconField({
+    name: "featuredIcon",
+    libraries: ["lucide"],
+    icons: ["si:SiGithub"],
 })
 ```
 

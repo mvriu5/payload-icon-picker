@@ -55,6 +55,21 @@ describe("iconField", () => {
             payloadIconPicker: {},
         })
     })
+
+    it("stores per-field icon library and value filters in custom metadata", () => {
+        const field = iconField({
+            icons: ["si:SiGithub"],
+            libraries: ["lucide"],
+            name: "icon",
+        })
+
+        expect(field.admin?.custom).toMatchObject({
+            payloadIconPicker: {
+                icons: ["si:SiGithub"],
+                libraries: ["lucide"],
+            },
+        })
+    })
 })
 
 describe("payloadIconPlugin", () => {
@@ -211,6 +226,87 @@ describe("payloadIconPlugin", () => {
         expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("Duplicate icon values detected"))
         expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining('"home" used by "Home", "House"'))
         expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("Use adapter prefixes to avoid collisions"))
+    })
+
+    it("limits an icon field to selected libraries and explicit icon values", () => {
+        const config = payloadIconPlugin({
+            icons: [
+                {
+                    Icon: HomeIcon,
+                    name: "Home",
+                    value: "lucide:Home",
+                },
+                {
+                    Icon: SearchIcon,
+                    name: "Search",
+                    value: "tabler:IconSearch",
+                },
+                {
+                    Icon: SearchIcon,
+                    name: "SiGithub",
+                    value: "si:SiGithub",
+                },
+            ],
+        })(
+            createTestConfig({
+                collections: [
+                    {
+                        slug: "posts",
+                        fields: [
+                            iconField({
+                                icons: ["si:SiGithub"],
+                                libraries: ["lucide"],
+                                name: "icon",
+                            }),
+                        ],
+                    },
+                ],
+            })
+        )
+
+        expect(getIconFieldComponent(config.collections?.[0]?.fields[0])?.clientProps?.icons).toEqual([
+            {
+                name: "Home",
+                value: "lucide:Home",
+            },
+            {
+                name: "SiGithub",
+                value: "si:SiGithub",
+            },
+        ])
+    })
+
+    it("warns when field filters reference unknown icon values or libraries", () => {
+        const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+
+        payloadIconPlugin({
+            icons: [
+                {
+                    Icon: HomeIcon,
+                    name: "Home",
+                    value: "lucide:Home",
+                },
+            ],
+        })(
+            createTestConfig({
+                collections: [
+                    {
+                        slug: "posts",
+                        fields: [
+                            iconField({
+                                icons: ["si:SiGithub"],
+                                libraries: ["tabler"],
+                                name: "icon",
+                            }),
+                        ],
+                    },
+                ],
+            })
+        )
+
+        expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining('iconField("icon") references unknown icon values: "si:SiGithub"'))
+        expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining('iconField("icon") references unknown icon libraries: "tabler"'))
+        expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining('iconField("icon") filter matched no icons'))
     })
 })
 
