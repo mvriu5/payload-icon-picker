@@ -1,6 +1,6 @@
 import type { IconFieldIcon } from "../utils.js"
 
-export type IconNode = Array<[string, Record<string, unknown>]>
+type IconNode = Array<[string, Record<string, unknown>]>
 
 type IconComponentWithRender = {
     displayName?: string
@@ -31,14 +31,14 @@ export type IconAdapterOptions = {
 
 export type IconLibrary = Record<string, unknown>
 
-export type IconAdapterLabelArgs = {
+type IconAdapterLabelArgs = {
     defaultLabel: string
     name: string
     prefix?: string
     value: string
 }
 
-export type IconAdapterValueArgs = {
+type IconAdapterValueArgs = {
     name: string
     prefix?: string
 }

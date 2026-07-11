@@ -1,6 +1,6 @@
 import type { ElementType } from "react"
 
-export type IconComponent = ElementType<{
+type IconComponent = ElementType<{
     "aria-hidden"?: boolean
     className?: string
     focusable?: boolean
@@ -45,7 +45,7 @@ export const normalizeIcons = (icons: IconFieldIcon[] | IconFieldIconRecord | un
     })
 }
 
-export const isIconComponent = (icon: IconComponent | IconFieldIcon): icon is IconComponent => {
+const isIconComponent = (icon: IconComponent | IconFieldIcon): icon is IconComponent => {
     if (typeof icon === "function" || typeof icon === "string") {
         return true
     }
@@ -82,7 +82,7 @@ export const getIconLabelParts = (
 export const getIconLibrary = (icon: IconFieldIcon, resolveIcon: (icon: IconFieldIcon) => string): string | undefined =>
     splitPrefixedValue(resolveIcon(icon))?.prefix
 
-export const splitPrefixedValue = (value: string): { name: string; prefix: string } | undefined => {
+const splitPrefixedValue = (value: string): { name: string; prefix: string } | undefined => {
     const separatorIndex = value.indexOf(":")
     if (separatorIndex <= 0 || separatorIndex === value.length - 1) return undefined
 

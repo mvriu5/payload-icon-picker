@@ -3,7 +3,7 @@ import type { IconFieldIcon } from "../utils.js"
 import { createSvgIconAdapter } from "./utils.js"
 import type { IconAdapterOptions, IconLibrary } from "./utils.js"
 
-export type PhosphorIconWeight = "bold" | "duotone" | "fill" | "light" | "regular" | "thin"
+type PhosphorIconWeight = "bold" | "duotone" | "fill" | "light" | "regular" | "thin"
 
 export type PhosphorIconAdapterOptions = Omit<IconAdapterOptions, "weight"> & {
     weight?: PhosphorIconWeight
