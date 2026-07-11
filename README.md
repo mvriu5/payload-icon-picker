@@ -182,6 +182,8 @@ payloadIconPlugin({
 
 Adapters support `prefix`, `include`, `exclude`, and optional label/value formatters:
 
+When registering icons from more than one library, use a unique `prefix` for every adapter. Many icon libraries export generic names such as `Home`, `Search`, or `User`; prefixes keep stored values unique and make it clear which library an icon came from.
+
 ```ts
 import * as SimpleIcons from "@icons-pack/react-simple-icons"
 import * as TablerIcons from "@tabler/icons-react"
@@ -202,6 +204,8 @@ payloadIconPlugin({
 ```
 
 With `prefix`, the adapter keeps `name` as the original library export name and sets `value` to `prefix:name`, for example `tabler:IconHome`.
+
+Without prefixes, duplicate icon values can collide. In development, the plugin warns when multiple registered icons resolve to the same stored value.
 
 Or pass explicit icon metadata:
 
