@@ -80,6 +80,14 @@ lucide:ArrowRight
 
 You can still use `resolveIcon` if you need a custom final storage format.
 
+### About `resolveIcon`
+
+When using `payloadIconPlugin()`, `resolveIcon` runs during Payload config setup. The resolved string is passed to the admin field as each icon's final `value`.
+
+That means normal `iconField()` usage does not require passing `resolveIcon` to the admin component manually.
+
+The `resolveIcon` prop on `IconRenderer`, `IconField`, and `createIconResolver()` is primarily for direct component usage, tests, or advanced cases where you bypass `payloadIconPlugin()`. If you use a custom `resolveIcon` for stored values, pass the same resolver when rendering or resolving those values outside the Payload admin UI.
+
 ## Rendering Stored Icons
 
 Use `IconRenderer` from the client export to render a stored icon string in your frontend.

@@ -8,6 +8,10 @@ import { defaultResolveIcon, normalizeIcons } from "../utils.js"
 export type IconRendererProps = Omit<HTMLAttributes<HTMLSpanElement>, "children" | "dangerouslySetInnerHTML"> & {
     fallback?: ReactNode
     icons: IconFieldIcon[] | IconFieldIconRecord
+    /**
+     * Maps registered icons to the stored string. Pass this when your stored
+     * values were produced with a custom `payloadIconPlugin({ resolveIcon })`.
+     */
     resolveIcon?: (icon: IconFieldIcon) => string
     size?: number | string
     value?: null | string

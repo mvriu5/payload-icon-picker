@@ -16,7 +16,12 @@ export type PayloadIconPluginConfig = {
      */
     disabled?: boolean
     /**
-     * Maps a selected icon to the string that is stored in Payload.
+     * Maps each registered icon to the final string stored in Payload.
+     *
+     * In normal `payloadIconPlugin()` + `iconField()` usage this runs during
+     * Payload config setup. The resolved string is then passed to the admin
+     * field as `icon.value`, so you do not need to also pass `resolveIcon` to
+     * the admin component manually.
      */
     resolveIcon?: (icon: IconFieldIcon) => string
 }
@@ -29,6 +34,11 @@ export type IconFieldConfig = Omit<TextField, "admin" | "hasMany" | "maxRows" | 
 
 export type ResolveIconFromStringConfig = {
     icons: IconFieldIcon[] | IconFieldIconRecord
+    /**
+     * Maps registered icons to the stored string. Use the same resolver that
+     * produced existing stored values when resolving icons outside the Payload
+     * admin UI.
+     */
     resolveIcon?: (icon: IconFieldIcon) => string
 }
 

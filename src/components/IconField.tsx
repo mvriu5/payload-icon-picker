@@ -15,6 +15,10 @@ export type IconFieldProps = TextFieldClientProps & {
     icons?: IconFieldIcon[] | IconFieldIconRecord
     noResultsLabel?: string
     placeholder?: string
+    /**
+     * Primarily for direct component usage. With `payloadIconPlugin()`, icon
+     * values are already resolved before they reach this component.
+     */
     resolveIcon?: (icon: IconFieldIcon) => string
 }
 
