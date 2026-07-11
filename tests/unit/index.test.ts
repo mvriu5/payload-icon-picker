@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { Config } from "payload"
 
 import { createIconResolver, iconField, payloadIconPlugin } from "../../src/index.js"
@@ -10,6 +10,10 @@ const createTestConfig = (config: Partial<Config>): Config => config as Config
 const getIconFieldComponent = (field: unknown) =>
     (field as { admin?: { components?: { Field?: { clientProps?: { icons?: Array<{ name: string; svg?: string; value: string }> }; path?: string } } } }).admin
         ?.components?.Field
+
+afterEach(() => {
+    vi.restoreAllMocks()
+})
 
 describe("iconField", () => {
     it("creates a single-value text field marked for the icon picker", () => {
@@ -172,6 +176,42 @@ describe("payloadIconPlugin", () => {
 
         expect(config.collections?.[0]?.fields[0]?.admin?.components).toBeUndefined()
     })
+
+    it("warns when registered icons resolve to duplicate values", () => {
+        const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+
+        payloadIconPlugin({
+            icons: [
+                {
+                    Icon: HomeIcon,
+                    name: "Home",
+                    value: "home",
+                },
+                {
+                    Icon: SearchIcon,
+                    name: "House",
+                    value: "home",
+                },
+            ],
+        })(
+            createTestConfig({
+                collections: [
+                    {
+                        slug: "posts",
+                        fields: [
+                            iconField({
+                                name: "icon",
+                            }),
+                        ],
+                    },
+                ],
+            })
+        )
+
+        expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("Duplicate icon values detected"))
+        expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining('"home" used by "Home", "House"'))
+        expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("Use adapter prefixes to avoid collisions"))
+    })
 })
 
 describe("createIconResolver", () => {
@@ -229,5 +269,30 @@ describe("createIconResolver", () => {
             svg: undefined,
             value: "unsafe",
         })
+    })
+
+    it("warns when duplicate values make stored icon resolution ambiguous", () => {
+        const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+
+        const resolveIcon = createIconResolver({
+            icons: [
+                {
+                    Icon: HomeIcon,
+                    name: "Home",
+                    value: "home",
+                },
+                {
+                    Icon: SearchIcon,
+                    name: "House",
+                    value: "home",
+                },
+            ],
+        })
+
+        expect(resolveIcon("home")).toMatchObject({
+            Icon: SearchIcon,
+            name: "House",
+        })
+        expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("Duplicate icon values detected"))
     })
 })

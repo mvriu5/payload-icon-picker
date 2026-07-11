@@ -42,6 +42,7 @@ type SerializableIcon = Omit<IconFieldIcon, "Icon" | "component"> & {
 
 const ICON_FIELD_MARKER = "payloadIconPicker"
 const ICON_FIELD_COMPONENT = "@mvriu5/payload-icon-picker/client#IconField"
+const PACKAGE_NAME = "@mvriu5/payload-icon-picker"
 
 export const iconField = ({ admin, noResultsLabel, placeholder, ...field }: IconFieldConfig): TextField =>
     ({
@@ -84,8 +85,11 @@ export const payloadIconPlugin =
 
 export const createIconResolver = ({ icons, resolveIcon }: ResolveIconFromStringConfig) => {
     const iconMap = new Map<string, ResolvedIcon>()
+    const normalizedIcons = normalizeIcons(icons)
 
-    normalizeIcons(icons).forEach((icon) => {
+    warnAboutDuplicateIconValues(normalizedIcons, (icon) => (resolveIcon ? resolveIcon(icon) : (icon.value ?? icon.name)))
+
+    normalizedIcons.forEach((icon) => {
         const resolvedValue = resolveIcon ? resolveIcon(icon) : (icon.value ?? icon.name)
 
         iconMap.set(resolvedValue, {
@@ -172,7 +176,11 @@ const withIconFields = (fields: Field[] | undefined, icons: SerializableIcon[]):
     })
 
 const normalizeIconsForClient = (icons: IconFieldIcon[] | IconFieldIconRecord, resolveIcon?: (icon: IconFieldIcon) => string): SerializableIcon[] => {
-    return normalizeIcons(icons).map(({ Icon, component, ...icon }) => {
+    const normalizedIcons = normalizeIcons(icons)
+
+    warnAboutDuplicateIconValues(normalizedIcons, (icon) => (resolveIcon ? resolveIcon(icon) : (icon.value ?? icon.name)))
+
+    return normalizedIcons.map(({ Icon, component, ...icon }) => {
         const sanitizedSvg = sanitizeSvg(icon.svg)
 
         return {
@@ -182,3 +190,32 @@ const normalizeIconsForClient = (icons: IconFieldIcon[] | IconFieldIconRecord, r
         }
     })
 }
+
+const warnAboutDuplicateIconValues = (icons: IconFieldIcon[], resolveValue: (icon: IconFieldIcon) => string): void => {
+    if (isProduction()) return
+
+    const iconsByValue = new Map<string, string[]>()
+
+    icons.forEach((icon) => {
+        const value = resolveValue(icon)
+        const names = iconsByValue.get(value) ?? []
+
+        names.push(icon.name)
+        iconsByValue.set(value, names)
+    })
+
+    const duplicateMessages = Array.from(iconsByValue.entries())
+        .filter(([, names]) => names.length > 1)
+        .map(([value, names]) => `"${value}" used by ${names.map((name) => `"${name}"`).join(", ")}`)
+
+    if (duplicateMessages.length === 0) {
+        return
+    }
+
+    console.warn(
+        `[${PACKAGE_NAME}] Duplicate icon values detected: ${duplicateMessages.join("; ")}. ` +
+            "Icon values must be unique so stored values resolve predictably. Use adapter prefixes to avoid collisions."
+    )
+}
+
+const isProduction = (): boolean => typeof process !== "undefined" && process.env.NODE_ENV === "production"
