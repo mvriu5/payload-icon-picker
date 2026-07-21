@@ -50,6 +50,45 @@ describe("IconRenderer", () => {
         expect(html).toContain('d="M4 4h16v16H4z"')
     })
 
+    it("prefers sanitized SVG metadata over a React icon component", () => {
+        const html = renderToStaticMarkup(
+            <IconRenderer
+                icons={[
+                    {
+                        Icon: HomeIcon,
+                        name: "Custom",
+                        svg: '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/></svg>',
+                        value: "custom",
+                    },
+                ]}
+                value="custom"
+            />
+        )
+
+        expect(html).toContain('d="M4 4h16v16H4z"')
+        expect(html).not.toContain("data-size")
+    })
+
+    it("falls back to a React icon component when SVG metadata is invalid", () => {
+        const html = renderToStaticMarkup(
+            <IconRenderer
+                icons={[
+                    {
+                        Icon: HomeIcon,
+                        name: "Unsafe",
+                        svg: '<svg><script>alert("xss")</script></svg>',
+                        value: "unsafe",
+                    },
+                ]}
+                size={18}
+                value="unsafe"
+            />
+        )
+
+        expect(html).toContain('data-size="18"')
+        expect(html).not.toContain("<script>")
+    })
+
     it("does not render unsafe SVG icon metadata", () => {
         const html = renderToStaticMarkup(
             <IconRenderer

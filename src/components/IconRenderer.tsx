@@ -39,16 +39,6 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
         return <>{fallback}</>
     }
 
-    const Icon = resolvedIcon.Icon ?? resolvedIcon.component
-
-    if (Icon) {
-        return (
-            <span aria-hidden={title ? undefined : true} className={className} title={title} {...props}>
-                <Icon aria-hidden focusable={false} size={size} />
-            </span>
-        )
-    }
-
     if (resolvedIcon.svg) {
         const sanitizedSvg = sanitizeSvg(resolvedIcon.svg)
 
@@ -63,6 +53,16 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
                 />
             )
         }
+    }
+
+    const Icon = resolvedIcon.Icon ?? resolvedIcon.component
+
+    if (Icon) {
+        return (
+            <span aria-hidden={title ? undefined : true} className={className} title={title} {...props}>
+                <Icon aria-hidden focusable={false} size={size} />
+            </span>
+        )
     }
 
     return <>{fallback}</>

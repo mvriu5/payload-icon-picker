@@ -235,8 +235,6 @@ export default buildConfig({
                         iconField({
                             name: "icon",
                             label: "Icon",
-                            libraries: ["lucide"],
-                            icons: ["si:SiGithub"],
                         }),
                         {
                             name: "url",
