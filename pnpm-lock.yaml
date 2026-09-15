@@ -17,7 +17,7 @@ importers:
         version: 2.2.0(react@19.2.8)
       '@hugeicons/core-free-icons':
         specifier: ^4.2.2
-        version: 4.3.0
+        version: 4.3.2
       '@icons-pack/react-simple-icons':
         specifier: ^13.13.0
         version: 13.13.0(react@19.2.8)
@@ -734,8 +734,8 @@ packages:
     peerDependencies:
       react: '>= 16 || ^19.0.0-rc'
 
-  '@hugeicons/core-free-icons@4.3.0':
-    resolution: {integrity: sha512-5DC5gq2psNDKBQThOjpuFCtMco8nl2FkrBzZgG15cFGM0kSwUoych/pw0DmjBygF9qRDITdBPtmzJqLsOeImMg==}
+  '@hugeicons/core-free-icons@4.3.2':
+    resolution: {integrity: sha512-31uDdIq71YcVxeltjcS/tsmYFt4VjmgyNTZfG1bY6mbeFmsYL6Nwz9PdDZetGtGPZOAEVg0bHoQFOoPWDC51bg==}
 
   '@icons-pack/react-simple-icons@13.13.0':
     resolution: {integrity: sha512-B5HhQMIpcSH4z8IZ8HFhD59CboHceKYMpPC9kAwGyKntvPdyJJv26DLu4Z1wAjcCLyrJhf11tMhiQGom9Rxb9g==}
@@ -4408,7 +4408,7 @@ snapshots:
     dependencies:
       react: 19.2.8
 
-  '@hugeicons/core-free-icons@4.3.0': {}
+  '@hugeicons/core-free-icons@4.3.2': {}
 
   '@icons-pack/react-simple-icons@13.13.0(react@19.2.8)':
     dependencies:
@@ -7533,8 +7533,8 @@ snapshots:
   vite@7.3.6(@types/node@26.2.0)(jiti@2.7.0)(sass@1.77.4)(tsx@4.22.4)(yaml@2.9.0):
     dependencies:
       esbuild: 0.28.2
-      fdir: 6.5.0(picomatch@4.0.5)
-      picomatch: 4.0.5
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
       postcss: 8.5.26
       rollup: 4.62.4
       tinyglobby: 0.2.17
