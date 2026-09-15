@@ -80,7 +80,7 @@
         "@payloadcms/richtext-lexical": "3.86.0",
         "@payloadcms/ui": "^3.86.0",
         "@phosphor-icons/react": "^2.1.10",
-        "@playwright/test": "1.62.1",
+        "@playwright/test": "1.63.0",
         "@swc/cli": "0.8.1",
         "@tabler/icons-react": "^3.44.0",
         "@types/node": "26.2.0",
